@@ -1,0 +1,30 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ai-study-docs",
+	"main": "src/index.js",
+	"compatibility_date": "2026-10-01",
+	// public 폴더는 정적 파일, /api/* 요청만 Worker(src/index.js)가 처리
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"run_worker_first": ["/api/*", "/auth/*"]
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ai-study-docs",
+			"database_id": "9a5ab5ff-0dcb-4045-9d7e-1096a98164a3",
+			"migrations_dir": "migrations"
+		}
+	],
+	"vars": {
+		// Google Cloud Console 에서 만든 OAuth 클라이언트 ID (공개값)
+		// 클라이언트 보안 비밀은 `npx wrangler secret put GOOGLE_CLIENT_SECRET` 으로 따로 등록
+		"GOOGLE_CLIENT_ID": "52207326681-79njma1rdjonfsmdp14fum7ogp3rq06a.apps.googleusercontent.com",
+		// 비워 두면 모든 구글 계정 허용. 예: "kiglestudio.com" 으로 넣으면 그 회사 계정만 허용
+		"ALLOWED_EMAIL_DOMAIN": "",
+		// 카페 관리자 (회원 승인·강퇴, 모든 글 삭제, 공지 작성). 여러 명이면 쉼표로 구분
+		"ADMIN_EMAILS": "kimdohan2@gmail.com"
+	},
+	"observability": { "enabled": true }
+}

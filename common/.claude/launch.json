@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "study-docs",
+      "runtimeExecutable": "study-docs/node_modules/.bin/wrangler",
+      "runtimeArgs": ["dev", "-c", "study-docs/wrangler.jsonc", "--persist-to", "study-docs/.wrangler/state", "--port", "8790"],
+      "port": 8790
+    }
+  ]
+}

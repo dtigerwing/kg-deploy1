@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 스터디</title>
+  <meta name="description" content="AI를 공부하며 정리한 내용을 게시판에 함께 쓰고, 고치고, 댓글로 토론하는 AI 스터디 공간">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="nav-toggle" id="navToggle" aria-label="게시판 메뉴 열기" aria-expanded="false"><span></span></button>
+      <a class="brand" href="#/">
+        <span class="brand-mark" aria-hidden="true">AI</span>
+        <span class="brand-name">AI 스터디</span>
+      </a>
+      <form class="top-search" id="searchForm" role="search">
+        <input type="search" id="searchInput" placeholder="글 검색" aria-label="글 검색">
+        <button type="submit" aria-label="검색">
+          <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+        </button>
+      </form>
+      <div class="user" id="userArea"></div>
+    </div>
+  </header>
+
+  <div class="banner">
+    <div class="banner-inner">
+      <p class="banner-kicker">함께 공부하는 AI 스터디</p>
+      <h1 class="banner-title"><a href="#/">AI 스터디</a></h1>
+      <p class="banner-desc">공부한 내용을 게시판에 올리고, 서로 고치고, 댓글로 토론해요</p>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="side" id="sidebar" aria-label="게시판 메뉴">
+      <section class="cafe-info" id="cafeInfo"></section>
+      <a class="write-btn" href="#/new">글쓰기</a>
+      <nav class="board-menu" id="boardMenu"></nav>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <main class="main" id="content">
+      <div id="page"><p class="muted">불러오는 중…</p></div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <p>AI 스터디 · 관리자가 승인한 회원만 이용할 수 있으며, 회원은 누구나 게시글을 고칠 수 있고 모든 수정은 변경 이력으로 남습니다.</p>
+    <p>Cloudflare Workers + D1 무료 플랜으로 운영하는 샘플 사이트입니다.</p>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
