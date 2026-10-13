@@ -235,7 +235,7 @@ const fmtTime = (t) => (t ? new Date(t).toLocaleString('ko-KR', { dateStyle: 'sh
 let chats = [];
 let openChat = null;
 let liveTimer = 0;
-const VERDICT = { answer: '✅ 답변', smalltalk: '👋 인사', unknown: '🤷 자료 없음', off_topic: '🙅 무관', injection: '🛡 캐내기', wasteful: '💸 낭비', repeat: '🔁 반복', busy: '⏳ AI 상한', error: '❗ 오류' };
+const VERDICT = { answer: '✅ 답변', smalltalk: '👋 인사', unknown: '🤷 자료 없음', off_topic: '🙅 무관', injection: '🛡 캐내기', wasteful: '💸 낭비', repeat: '🔁 반복', busy: '⏳ AI 상한', error: '❗ 오류', match: '🎯 비슷한 질문 답', suggest: '💡 질문 제안', no_match: '🤷 못 찾음' };
 
 function stopLive() {
   clearInterval(liveTimer);
@@ -455,6 +455,7 @@ const STRIKE_LABELS = {
 };
 const MESSAGE_LABELS = {
   welcome: '대화를 시작했을 때 ({name}=이용자 이름)',
+  match: 'AI 없이 비슷한 질문을 찾아 답할 때 (답변 앞에 붙음)', suggest: 'AI 없이 비슷한 질문 후보를 보여 줄 때', noMatch: 'AI 없이 비슷한 질문을 못 찾았을 때',
   unknown: '지식베이스에 답이 없을 때', offTopic: '무관한 질문', injection: '프롬프트 캐내기 시도', wasteful: '반복·낭비성 질문',
   repeat: '같은 질문을 한 번 더 했을 때 (앞 답변 앞에 붙음)', gibberish: '의미 없는 입력', smalltalk: '인사·감사 ({name}=이용자 이름)',
   warning: '경고 문구 ({n}=횟수, {limit}=허용 횟수)', blocked: '대화가 제한됐을 때', tooLong: '너무 긴 질문 ({max}=최대 글자 수)',
@@ -494,7 +495,8 @@ function renderRules() {
     </div>
     <div class="card">
       <h2>🤖 AI 답변 지침</h2>
-      <p class="muted">AI는 "질문 · 답변" 탭에서 켜 둔 내용만 근거로 답하고, 아래 지침으로 이상한 질문을 판정해요.</p>
+      <label class="check"><input type="checkbox" name="aiEnabled" ${s.aiEnabled ? 'checked' : ''} /> AI(OpenAI) 답변 사용 — 서버에 OPENAI_API_KEY 가 있어야 해요</label>
+      <p class="muted">끄면 자유 질문은 AI 없이 가장 비슷한 자주 묻는 질문으로 답하거나 후보를 버튼으로 보여 줘요 (크레딧 0). 켜면 AI가 "질문 · 답변" 탭에서 켜 둔 내용만 근거로 답하고, 아래 지침으로 이상한 질문을 판정해요.</p>
       ${textField('style', '답변 스타일', s.style, 3)}
       ${textField('guidelines', '이상 사용자 판단 지침 (크레딧 낭비 판정 기준)', s.guidelines, 12, '여기에 해당하면 "반복·낭비성 질문"으로 경고가 쌓여요.')}
     </div>
@@ -537,10 +539,12 @@ $('.rules').addEventListener('submit', async (e) => {
   const next = structuredClone(settings);
   for (const [name, value] of f) {
     const [a, b] = name.split('.');
+    if (name === 'aiEnabled') continue;
     if (name === 'injectionPatterns') next.injectionPatterns = String(value).split('\n').map((x) => x.trim()).filter(Boolean);
     else if (b) next[a][b] = typeof defaults[a][b] === 'number' ? Number(value) : value;
     else next[a] = value;
   }
+  next.aiEnabled = e.target.elements.aiEnabled.checked;
   const err = $('.rules .form-error');
   err.textContent = '';
   try {
@@ -585,7 +589,7 @@ async function loadStatus() {
   $('.status').innerHTML = `
     <h2>🔌 연결 상태</h2>
     <dl>
-      <dt>🤖 OpenAI</dt><dd>${yes(s.openai, 'API 키 연결됨', 'OPENAI_API_KEY 없음')} · 모델 <code>${esc(s.model)}</code></dd>
+      <dt>🤖 AI 답변</dt><dd>${s.aiOn ? `✅ OpenAI 사용 중 · 모델 <code>${esc(s.model)}</code>` : '⏸ 꺼짐 — 자주 묻는 질문 매칭으로 답해요 (크레딧 0)'}</dd>
       <dt>🎭 감정 분류 (Jev)</dt><dd>${yes(s.jev, 'API 키 연결됨', 'TYPESAFE_API_KEY 없음 — 감정 분석 없이 동작해요')} · 모델 <code>${esc(s.jevModel)}</code></dd>
       <dt>📈 오늘 AI 호출</dt><dd>${s.aiToday}회</dd>
       <dt>🗄 저장소</dt><dd>${s.storage === 'redis' ? yes(true, 'Upstash Redis', '') : s.persistent ? yes(true, '로컬 파일 (.data/) — 개발용', '') : yes(false, '', '임시 메모리 — Vercel 에서 Upstash Redis 를 연결해야 저장돼요')}</dd>

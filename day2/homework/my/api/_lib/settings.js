@@ -20,6 +20,8 @@ const STYLE = `친근한 존댓말로 3~5문장 안에서 짧게 답한다. 목�
 채팅 창은 마크다운을 표시하지 않으므로 **, #, 표, 코드 블록 같은 마크다운 기호를 쓰지 않는다.`;
 
 export const defaultSettings = {
+  // AI(OpenAI) 답변 사용 — 끄면 자유 질문은 가장 비슷한 자주 묻는 질문으로 답하거나 제안 (크레딧 0)
+  aiEnabled: false,
   botName: '코코비 도우미',
   greeting: '안녕하세요! 저는 KIGLE 놀이터 안내를 맡은 코코비 도우미예요. 🦖\n대화를 시작하기 전에 이름과 이메일을 알려 주세요.',
   notice: '입력 중인 문장과 대화 내용은 동의하신 범위에서 감정 분석·응대 품질 관리에 쓰여요. 연락처 같은 민감한 정보는 적지 말아 주세요.',
@@ -75,6 +77,9 @@ export const defaultSettings = {
 · 동의하지 않을 수 있으며, 이 경우 챗봇을 이용할 수 없어요. 만 14세 미만 어린이는 보호자가 대신 입력해 주세요.`,
   },
   messages: {
+    match: '이 질문에 대한 안내예요.',
+    suggest: '이 중에 찾으시는 질문이 있나요? 눌러 보세요.',
+    noMatch: '그 질문은 자주 묻는 질문에서 찾지 못했어요. 아래 주제에서 골라 주시거나, 자세한 내용은 KIGLE 공식 홈페이지(https://kigle.co.kr)를 확인해 주세요.',
     welcome: '{name} 님, 반가워요! 😊 궁금한 걸 적어 주시거나 아래 주제를 눌러 자주 묻는 질문을 골라 보세요.',
     unknown: '그 부분은 아직 제가 안내할 수 있는 자료가 없어요. 😢 자세한 내용은 KIGLE 공식 홈페이지(https://kigle.co.kr)를 확인해 주세요.',
     offTopic: '저는 KIGLE과 코코비, 게임·영상·동요, 이 사이트 이용 방법만 안내할 수 있어요. 아래 주제 중에서 골라 보시겠어요?',
@@ -149,6 +154,7 @@ const RANGES = {
 export function validateSettings(input) {
   const s = mergeShape(defaultSettings, input || {});
   const out = {
+    aiEnabled: Boolean(s.aiEnabled),
     botName: text(s.botName, 30, '챗봇 이름'),
     greeting: text(s.greeting, 500, '첫인사'),
     notice: text(s.notice, 300, '안내 문구'),

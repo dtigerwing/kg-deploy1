@@ -27,6 +27,7 @@
 - 감정: TypeSafe AI 의 Jev(`api/_lib/emotion.js`, `TYPESAFE_API_KEY`)가 10가지 감정 확률로 분류 → 기준 확률 이상이면 감정별 첫 문장·응대 기준을 developer 메시지로 OpenAI 에 함께 보냄. 이용자에게는 분석 결과를 보여 주지 않음. 키가 없으면 감정 없이 동작
 - 채팅 내역: `conv:{id}` + 정렬 목록 `convs` (`api/_lib/conv.js`), 동의한 보관 기간(기본 90일) 뒤 자동 삭제
 - 기본 지식베이스: `api/_lib/seed-kb.js`, 기본 규칙: `api/_lib/settings.js` (관리자 페이지에서 저장하면 저장소 값이 우선)
+- AI(OpenAI) 답변은 기본 꺼짐(`aiEnabled: false`, 관리자 > 규칙에서 켬 + OPENAI_API_KEY 필요). 꺼져 있으면 자유 질문은 `rankFaq`(guard.js)로 가장 비슷한 자주 묻는 질문을 답하거나 버튼으로 제안
 - 답변 순서: 대화 시작 확인 → 제한 확인 → 감정 분류 → 규칙 검사(캐내기 패턴·의미 없는 입력·반복·인사, 크레딧 0) → 자주 묻는 질문과 같으면 저장된 답 → OpenAI(`gpt-5.6-terra`, 지식베이스 안에서만, JSON 판정) → 경고·제한
 - 대화가 시작되면(대화당 1번) Gmail SMTP 로 NOTIFY_EMAIL 에 알림
 - 저장소: 운영은 Upstash Redis(`KV_REST_API_URL`/`KV_REST_API_TOKEN`), 로컬은 `.data/dev-store.json`

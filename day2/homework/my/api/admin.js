@@ -46,6 +46,7 @@ const handle = route(async (request) => {
       return json({
         model: MODEL,
         openai: Boolean(process.env.OPENAI_API_KEY),
+        aiOn: (await loadSettings()).aiEnabled && Boolean(process.env.OPENAI_API_KEY),
         jev: emotionReady,
         jevModel: JEV_MODEL,
         storage: store.kind,

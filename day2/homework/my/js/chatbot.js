@@ -260,6 +260,16 @@ async function ask(payload, shownText) {
     }
     const extra = el('div');
     if (data.warning) extra.append(el('p', 'cb-warning', `⚠️ ${data.warning}`));
+    if (data.suggestions?.length) {
+      const list = el('div', 'cb-questions');
+      for (const q of data.suggestions) {
+        const b = el('button', 'cb-q', q.question);
+        b.type = 'button';
+        b.addEventListener('click', () => ask({ faqId: q.id }, q.question));
+        list.append(b);
+      }
+      extra.append(list);
+    }
     if (data.showTopics && !data.blocked && !data.ended) {
       const t = topics('다른 주제도 있어요');
       if (t) extra.append(t);

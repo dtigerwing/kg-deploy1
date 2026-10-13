@@ -52,3 +52,41 @@ export function matchInjection(text, patterns) {
 export function looksLeaked(answer, canary) {
   return answer.includes(canary) || /\[(절대 규칙|판정 기준|출력 형식)\]|<지식베이스>|<\/지식베이스>|이상 사용자 판단 지침/.test(answer);
 }
+
+// AI 없이 자유 질문에 가장 가까운 자주 묻는 질문 찾기
+// 글자·글자 묶음이 질문·답변과 얼마나 겹치는지 보되, 여러 항목에 흔한 것('게임', '어요')은 가볍게 셈 (IDF)
+const grams = (s) => new Set([...s, ...bigrams(s)]); // 한 글자('꽃')와 두 글자 묶음('치과') 모두
+
+export function rankFaq(text, items, limit = 3) {
+  const mine = grams(normalize(text));
+  if (!mine.size) return [];
+  const docs = items.map((item) => {
+    const q = grams(normalize(item.question));
+    return { item, q, all: new Set([...q, ...grams(normalize(item.answer))]) };
+  });
+  const idf = (b) => Math.log((docs.length + 1) / (docs.filter((d) => d.all.has(b)).length + 1)) + 0.1;
+  const weight = new Map([...mine].map((b) => [b, idf(b)]));
+  const total = [...weight.values()].reduce((a, b) => a + b, 0);
+  return docs
+    .map(({ item, q, all }) => {
+      let inQ = 0;
+      let inAll = 0;
+      for (const [b, w] of weight) {
+        if (q.has(b)) inQ += w;
+        if (all.has(b)) inAll += w;
+      }
+      // 반대 방향: 자주 묻는 질문의 핵심이 메시지에 얼마나 들어 있는지 (앞뒤에 다른 말이 붙어도 찾도록)
+      let qTotal = 0;
+      let qCovered = 0;
+      for (const b of q) {
+        const w = idf(b);
+        qTotal += w;
+        if (mine.has(b)) qCovered += w;
+      }
+      const score = Math.max(inQ / total, (inAll / total) * 0.85, qTotal ? (qCovered / qTotal) * 0.8 : 0);
+      return { item, score: Math.round(score * 100) / 100 };
+    })
+    .filter((r) => r.score >= 0.25)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}

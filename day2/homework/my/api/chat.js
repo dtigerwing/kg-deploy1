@@ -6,7 +6,7 @@ import { HttpError, assertSameOrigin, clientInfo, fill, json, kstParts, readJson
 import { store } from './_lib/store.js';
 import { loadKb } from './_lib/kb.js';
 import { loadSettings } from './_lib/settings.js';
-import { isGibberish, isSmallTalk, looksLeaked, matchInjection, normalize, similarity } from './_lib/guard.js';
+import { isGibberish, isSmallTalk, looksLeaked, matchInjection, normalize, rankFaq, similarity } from './_lib/guard.js';
 import { CANARY, askModel, buildInstructions } from './_lib/llm.js';
 import { EMOTIONS, classify, contextBlock, emotionReady, openerFor, pickRules, textHash } from './_lib/emotion.js';
 import { appendConv } from './_lib/conv.js';
@@ -17,7 +17,7 @@ const COUNTER_TTL = 26 * 3600;
 const STRIKE_OF = { off_topic: 'offTopic', injection: 'injection', wasteful: 'wasteful' };
 const REFUSAL_OF = { offTopic: 'offTopic', injection: 'injection', wasteful: 'wasteful' };
 // 감정 첫 문장을 앞에 붙여도 되는 규칙 응답
-const OPENER_OK = new Set(['unknown', 'off_topic', 'busy', 'error']);
+const OPENER_OK = new Set(['unknown', 'off_topic', 'busy', 'error', 'match', 'suggest', 'no_match']);
 
 // 채팅 창은 글자 그대로 보여 주므로 마크다운 기호는 걷어 냄
 const plain = (s) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1').replace(/^#{1,6}\s+/gm, '').replace(/^\s*[-*]\s+/gm, '· ');
@@ -89,6 +89,8 @@ export const POST = route(async (request) => {
   // 5. 답 정하기 — result: { verdict, source: faq|rule|ai, text?, strike? }
   let result;
   let usage = null;
+  let suggestions = [];
+  const aiOn = settings.aiEnabled && Boolean(process.env.OPENAI_API_KEY);
   const norm = normalize(message);
   const prev = faq ? null : sess.recent.find((r) => r.n === norm || (norm.length >= 6 && similarity(r.n, norm) >= 0.85));
 
@@ -110,6 +112,19 @@ export const POST = route(async (request) => {
     const exact = kb.items.find((i) => i.enabled && normalize(i.question) === norm);
     if (exact) {
       result = { verdict: 'answer', source: 'faq', text: exact.answer };
+    } else if (!aiOn) {
+      // AI 없이: 확실히 가까운 질문이 하나면 그 답, 애매하면 후보를 버튼으로, 없으면 안내
+      const ranked = rankFaq(message, kb.items.filter((i) => i.enabled));
+      const [top, second] = ranked;
+      if (top && top.score >= 0.6 && top.score - (second?.score || 0) >= 0.1) {
+        result = { verdict: 'match', source: 'faq', text: `${M.match} (${top.item.question})\n\n${top.item.answer}` };
+        suggestions = ranked.slice(1).filter((r) => r.score >= 0.4);
+      } else if (ranked.some((r) => r.score >= 0.3)) {
+        result = { verdict: 'suggest', source: 'rule' };
+        suggestions = ranked.filter((r) => r.score >= 0.3);
+      } else {
+        result = { verdict: 'no_match', source: 'rule' };
+      }
     } else if ((await store.incr(`ai:d:${kst.day}`, COUNTER_TTL)) > L.aiPerDay) {
       result = { verdict: 'busy', source: 'rule' };
     } else {
@@ -137,11 +152,11 @@ export const POST = route(async (request) => {
 
   // 6. 규칙 응답 문구 (+ 감정 첫 문장) · 경고 · 제한
   const vars = { name, max: L.maxChars };
-  const canned = { unknown: M.unknown, busy: M.busy, error: M.error };
+  const canned = { unknown: M.unknown, busy: M.busy, error: M.error, suggest: M.suggest, no_match: M.noMatch };
   let text = result.text ? fill(result.text, result.source === 'rule' ? vars : {}) : fill(canned[result.verdict] || M[REFUSAL_OF[result.strike]] || M.unknown, vars);
   if (result.source !== 'ai' || !result.text) {
     const opener = OPENER_OK.has(result.verdict) ? openerFor(emotion, policy, name) : '';
-    if (opener) text = `${opener} ${text}`;
+    if (opener) text = `${opener}\n${text}`;
   }
   let warning = null;
   let nowBlocked = false;
@@ -171,7 +186,7 @@ export const POST = route(async (request) => {
     sess.history = sess.history.slice(-20);
   }
   if (!faq && !prev) {
-    sess.recent.unshift({ n: norm, a: result.verdict === 'answer' ? text : null, times: 1 });
+    sess.recent.unshift({ n: norm, a: ['answer', 'match'].includes(result.verdict) ? text : null, times: 1 });
     sess.recent = sess.recent.slice(0, 8);
   }
   await store.set(sessKey, sess, SESSION_TTL);
@@ -215,6 +230,7 @@ export const POST = route(async (request) => {
     verdict: result.verdict,
     warning,
     blocked: nowBlocked,
-    showTopics: result.verdict !== 'answer',
+    showTopics: !['answer', 'match', 'suggest'].includes(result.verdict),
+    suggestions: suggestions.map((r) => ({ id: r.item.id, question: r.item.question })),
   });
 });
