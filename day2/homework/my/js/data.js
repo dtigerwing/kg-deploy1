@@ -1,7 +1,7 @@
 // 게임 데이터 — 실제 스토어 정보 (Google Play / YouTube)
 // cat: 시안용 분류(놀이 유형). 필요하면 여기만 고치면 됩니다.
 
-const img = (slug, n) => `assets/games/${slug}/${String(n).padStart(2, '0')}.jpg`;
+const img = (slug, n) => `/assets/games/${slug}/${String(n).padStart(2, '0')}.jpg`;
 const range = (slug, from, to) => Array.from({ length: to - from + 1 }, (_, i) => img(slug, from + i));
 const play = (id) => `https://play.google.com/store/apps/details?id=${id}`;
 const yt = (url) => url.split('/').pop();

@@ -1,6 +1,6 @@
 # KIGLE 놀이터 사이트
 
-정식 주소: https://kg-deploy1-wheat.vercel.app/ (Vercel, GitHub `kimdohan2/kg-deploy1` main 에 push 하면 배포)
+정식 주소: https://kg-deploy1-wheat.vercel.app/ (Vercel, GitHub `kimdohan2/kg-deploy1` main 에 push 하면 배포. Vercel 프로젝트 Root Directory 는 `day2/homework/my` 여야 함 — 폴더를 옮기면 같이 바꿀 것)
 
 ## 빌드 두 개: 테스트 → 정식
 
@@ -19,9 +19,9 @@
 3. `git diff` 확인 → 커밋 → 사용자 확인 후 push (= 정식 배포).
 되돌리기는 git (`git revert`).
 
-## 챗봇 (테스트 빌드에 붙어 있음)
+## 챗봇 (정식·테스트 빌드 모두)
 
-- 화면: `test/js/chatbot.js`, `test/chatbot.css` — 우측 하단 버튼
+- 화면: `test/js/chatbot.js`, `test/chatbot.css` (정식은 promote 로 복사된 `js/chatbot.js`, `chatbot.css`) — 우측 하단 버튼
 - 서버: `api/session.js`(대화 시작: 이름·이메일·동의), `api/emotion.js`(입력 중 감정 분석), `api/chat.js`(질문), `api/faq.js`(주제·질문 목록·동의 문구), `api/admin.js`(관리자) — Vercel 함수. 공통 코드는 `api/_lib/`
 - 관리자 페이지: `/admin/` (ADMIN_PASSWORD 로그인) — 질문·답변 CRUD, 채팅 내역(이름·이메일·감정, 실시간), 감정 분류(바로 해 보기 + 응대 기준), 규칙·동의 문구, 차단 기록, 연결 상태
 - 감정: TypeSafe AI 의 Jev(`api/_lib/emotion.js`, `TYPESAFE_API_KEY`)가 10가지 감정 확률로 분류 → 기준 확률 이상이면 감정별 첫 문장·응대 기준을 developer 메시지로 OpenAI 에 함께 보냄. 이용자에게는 분석 결과를 보여 주지 않음. 키가 없으면 감정 없이 동작

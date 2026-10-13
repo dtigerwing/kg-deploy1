@@ -413,8 +413,8 @@ const spy = new IntersectionObserver((entries) => {
 
 // ---------- imagegen 스킬로 만든 이미지 연결 ----------
 // scripts/generate-assets.sh 가 만든 assets/gen/manifest.json 에 있는 이미지만 씀 (없으면 지금 디자인 그대로)
-fetch('assets/gen/manifest.json').then((r) => (r.ok ? r.json() : [])).catch(() => []).then((files) => {
-  const gen = (f) => (files.includes(f) ? `assets/gen/${f}` : null);
+fetch('/assets/gen/manifest.json').then((r) => (r.ok ? r.json() : [])).catch(() => []).then((files) => {
+  const gen = (f) => (files.includes(f) ? `/assets/gen/${f}` : null);
   const village = gen('bg-friends-village.jpg');
   if (village) { $('.family').style.setProperty('--village', `url(${village})`); $('.family').classList.add('has-village'); }
   $$('img[data-gen]').forEach((img) => {
