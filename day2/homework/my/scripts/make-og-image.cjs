@@ -1,7 +1,7 @@
 // OG 이미지 만들기: imagegen 배경(assets/gen/og-bg.jpg) 위에 코코비 공식 캐릭터와 로고·제목·주소를 얹어 1200x630 으로 저장
 // 배경: scripts/prompts.jsonl 의 og-bg 로 만든 그림에서 imagegen edit 로 장난감들을 지운 빈 언덕
 // 캐릭터: kigle.co.kr 공식 3D 캐릭터 그림 (AI 로 다시 그리지 않고 원본 그대로 사용)
-// 사용: node scripts/make-og-image.js og-image.jpg   (전역 playwright + Chrome 필요)
+// 사용: node scripts/make-og-image.cjs og-image.jpg   (전역 playwright + Chrome 필요)
 const { chromium } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const fs = require('fs');
 const path = require('path');

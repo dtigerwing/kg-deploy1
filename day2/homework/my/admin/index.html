@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>KIGLE 챗봇 관리</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6C14 6 5 22 5 37c0 13 11 21 27 21s27-8 27-21C59 22 50 6 32 6z' fill='%238fdb6e' stroke='%233a2e5c' stroke-width='4'/%3E%3Cellipse cx='23' cy='31' rx='4' ry='5.5' fill='%233a2e5c'/%3E%3Cellipse cx='41' cy='31' rx='4' ry='5.5' fill='%233a2e5c'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+  <!-- 로그인 -->
+  <main class="login" hidden>
+    <form class="card login-card">
+      <h1><span class="blob" aria-hidden="true"><i></i><i></i></span>챗봇 관리</h1>
+      <p class="muted">KIGLE 챗봇의 질문·답변과 규칙을 관리하는 곳이에요.</p>
+      <label class="field"><span>🔒 관리자 비밀번호</span><input type="password" name="password" autocomplete="current-password" required /></label>
+      <p class="form-error" role="alert"></p>
+      <button class="btn primary" type="submit">로그인</button>
+    </form>
+  </main>
+
+  <!-- 관리 화면 -->
+  <div class="app" hidden>
+    <header class="top">
+      <h1><span class="blob" aria-hidden="true"><i></i><i></i></span>챗봇 관리</h1>
+      <nav class="tabs" role="tablist" aria-label="관리 메뉴">
+        <button role="tab" data-tab="kb" aria-selected="true">📚 질문 · 답변</button>
+        <button role="tab" data-tab="chats" aria-selected="false">💬 채팅 내역</button>
+        <button role="tab" data-tab="emotion" aria-selected="false">🎭 감정 분류</button>
+        <button role="tab" data-tab="rules" aria-selected="false">⚙️ 규칙</button>
+        <button role="tab" data-tab="blocks" aria-selected="false">🚫 차단 기록</button>
+        <button role="tab" data-tab="status" aria-selected="false">🔌 연결 상태</button>
+      </nav>
+      <div class="top-actions">
+        <a class="btn ghost small" href="/test/" target="_blank" rel="noopener">🧪 테스트 빌드 열기 ↗</a>
+        <button class="btn ghost small logout" type="button">👋 로그아웃</button>
+      </div>
+    </header>
+    <p class="banner" hidden></p>
+
+    <!-- 질문·답변 -->
+    <section class="panel" data-panel="kb">
+      <aside class="cats card">
+        <div class="cats-head">
+          <h2>🗂 카테고리</h2>
+          <button class="btn small add-cat" type="button">+ 추가</button>
+        </div>
+        <ul class="cat-list"></ul>
+        <button class="link reset-kb" type="button">처음 상태로 되돌리기</button>
+      </aside>
+      <div class="items">
+        <div class="items-head">
+          <h2 class="items-title">전체 질문</h2>
+          <input class="search" type="search" placeholder="질문·답변 검색" aria-label="질문·답변 검색" />
+          <label class="check"><input type="checkbox" class="only-drafts" /> 꺼진 것만</label>
+          <button class="btn primary add-item" type="button">➕ 질문 추가</button>
+        </div>
+        <p class="muted hint">켜진 질문만 이용자 화면과 AI 답변 근거로 쓰여요. AI는 여기 적힌 답변 밖의 내용은 말하지 않아요.</p>
+        <ul class="item-list"></ul>
+      </div>
+    </section>
+
+    <!-- 채팅 내역 -->
+    <section class="panel" data-panel="chats" hidden>
+      <aside class="card chat-side">
+        <div class="row-head">
+          <h2>💬 채팅 내역</h2>
+          <label class="check" title="5초마다 새 대화와 메시지를 불러와요"><input type="checkbox" class="live" checked /> 🔴 실시간</label>
+        </div>
+        <input class="search chat-search" type="search" placeholder="이름 · 이메일 검색" aria-label="이름 · 이메일 검색" />
+        <ul class="chat-list"></ul>
+      </aside>
+      <div class="card chat-detail"><p class="muted">👈 왼쪽에서 대화를 골라 주세요.</p></div>
+    </section>
+
+    <!-- 감정 분류 -->
+    <section class="panel" data-panel="emotion" hidden>
+      <div class="card emo-test">
+        <h2>🔍 감정 분류 바로 해 보기</h2>
+        <p class="muted">문장을 입력하면 Jev(TypeSafe AI)가 바로 감정을 분류하고, OpenAI 에 함께 전달될 응대 기준을 보여 줘요. 아래 응대 기준을 고치면 저장하기 전에도 미리보기에 반영돼요.</p>
+        <textarea class="emo-input" rows="3" maxlength="300" placeholder="예: 앱이 계속 꺼지는데 대체 어떻게 하라는 거예요?"></textarea>
+        <div class="emo-result"><p class="muted">⌨️ 입력을 멈추면 바로 분류해요.</p></div>
+      </div>
+      <form class="card emo-policy"></form>
+    </section>
+
+    <!-- 규칙 -->
+    <section class="panel" data-panel="rules" hidden>
+      <form class="rules"></form>
+    </section>
+
+    <!-- 차단 기록 -->
+    <section class="panel" data-panel="blocks" hidden>
+      <div class="card">
+        <div class="row-head">
+          <h2>🚫 최근 차단 기록</h2>
+          <button class="btn ghost small reload-blocks" type="button">🔄 새로고침</button>
+        </div>
+        <p class="muted">규칙에 따라 대화나 접속 주소가 제한된 기록이에요 (최근 100건). 잘못 막혔다면 해제할 수 있어요.</p>
+        <div class="table-wrap"><table class="blocks"><thead><tr><th>시각</th><th>대상</th><th>사유</th><th>이름</th><th>IP</th><th>마지막 질문</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- 연결 상태 -->
+    <section class="panel" data-panel="status" hidden>
+      <div class="card status"></div>
+    </section>
+  </div>
+
+  <!-- 질문 편집 -->
+  <dialog class="modal item-modal">
+    <form method="dialog" class="card">
+      <h2 class="modal-title">질문 추가</h2>
+      <label class="field"><span>🗂 카테고리</span><select name="categoryId" required></select></label>
+      <label class="field"><span>❓ 질문 (이용자에게 버튼으로 보여요)</span><input name="question" maxlength="200" required /></label>
+      <label class="field"><span>💡 답변 (AI도 이 내용만 근거로 답해요)</span><textarea name="answer" rows="8" maxlength="2000" required></textarea></label>
+      <label class="check"><input type="checkbox" name="enabled" /> 켜기 — 이용자 화면과 AI 답변에 사용</label>
+      <p class="form-error" role="alert"></p>
+      <div class="modal-actions">
+        <button class="btn ghost" value="cancel" formnovalidate>취소</button>
+        <button class="btn primary" value="save">💾 저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 카테고리 편집 -->
+  <dialog class="modal cat-modal">
+    <form method="dialog" class="card">
+      <h2 class="modal-title">카테고리 추가</h2>
+      <div class="cat-fields">
+        <label class="field icon-field"><span>아이콘</span><input name="icon" maxlength="4" placeholder="💬" /></label>
+        <label class="field"><span>이름</span><input name="name" maxlength="30" required /></label>
+      </div>
+      <p class="form-error" role="alert"></p>
+      <div class="modal-actions">
+        <button class="btn ghost" value="cancel" formnovalidate>취소</button>
+        <button class="btn primary" value="save">💾 저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

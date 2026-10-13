@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>조선 전생 그림판</title>
+  <meta name="description" content="사진을 올리면 조선시대 직업 하나를 뽑아, 그 옷을 입은 그림판 낙서로 그리고 이름과 일대기를 지어 드려요.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cellipse cx='8' cy='11' rx='7.5' ry='2' fill='%23000'/%3E%3Cpath d='M4.5 11V6.5h7V11z' fill='%23000'/%3E%3Cpath d='M5 7h6' stroke='%23c0a060'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Song+Myung&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="desktop">
+
+    <!-- 그림판 창 -->
+    <section class="window paint" aria-labelledby="paint-title">
+      <header class="titlebar">
+        <svg class="titlebar-icon gat" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="11" rx="7.5" ry="2"/><path d="M4.5 11V6.5h7V11z"/><path d="M5 7h6" stroke="#c0a060"/></svg>
+        <h1 id="paint-title"><span id="doc-name">제목 없음</span> - 조선 전생 그림판</h1>
+        <div class="titlebar-buttons" aria-hidden="true"><span>_</span><span>□</span><span>×</span></div>
+      </header>
+      <nav class="menubar" aria-hidden="true">
+        <span><u>파</u>일(F)</span><span><u>편</u>집(E)</span><span><u>보</u>기(V)</span><span><u>이</u>미지(I)</span><span><u>색</u>(C)</span><span><u>전</u>생(J)</span><span><u>도</u>움말(H)</span>
+      </nav>
+
+      <div class="paint-body">
+        <aside class="toolbox" id="toolbox" aria-hidden="true"></aside>
+
+        <div class="workspace" id="workspace">
+          <!-- 1. 사진 고르기 -->
+          <div class="dropzone" id="dropzone">
+            <div class="ants">
+              <svg class="drop-icon gat" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="11" rx="7.5" ry="2"/><path d="M4.5 11V6.5h7V11z"/><path d="M5 7h6" stroke="#c0a060"/></svg>
+              <p class="drop-title">사진을 여기에 끌어다 놓으세요</p>
+              <p class="drop-sub">또는 <kbd>Ctrl</kbd>+<kbd>V</kbd> 로 붙여넣기</p>
+              <button type="button" class="btn default" id="pick">사진 고르기…</button>
+              <p class="drop-note">조선시대 직업 하나를 무작위로 뽑아 그 옷을 입은 그림판 낙서로 그리고,<br>이름을 지어 그 사람의 일생을 적어 드려요. 광대가 될지, 임금의 어의가 될지는 운명에 달렸어요.</p>
+              <div class="key-warning" id="key-warning" hidden>
+                <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3L30 28H2z" fill="#ffd23f" stroke="#000"/><path d="M15 11h2v9h-2zM15 22h2v2h-2z"/></svg>
+                <p><b>API 키가 아직 없어요.</b><br>프로젝트 폴더의 <code>.env</code> 파일에서 <code>OPENAI_API_KEY=</code> 뒤에 키를 붙여넣고 저장하세요. 서버를 다시 켤 필요는 없어요.</p>
+              </div>
+            </div>
+            <input type="file" id="file" accept="image/*" hidden>
+          </div>
+
+          <!-- 2. 캔버스 -->
+          <div class="stage" id="stage" hidden>
+            <div class="canvas" id="canvas">
+              <img id="photo" alt="올린 원본 사진">
+              <img id="painting" alt="" hidden>
+              <div class="overlay" id="overlay" hidden></div>
+            </div>
+            <figure class="inset" id="inset" hidden>
+              <img id="inset-photo" alt="원본 사진">
+              <figcaption>원본</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+
+      <!-- 그림 아래: 호패(이름표) -->
+      <div class="nameplate" id="nameplate" hidden aria-live="polite">
+        <div class="hopae" aria-hidden="true">
+          <span class="hopae-hole"></span>
+          <span class="hopae-name" id="hopae-name"></span>
+        </div>
+        <div class="nameplate-body">
+          <p class="nameplate-job"><span class="chip" id="job-chip"></span><span id="job-desc"></span></p>
+          <h2 class="nameplate-name"><span id="person-name"></span><small id="person-hanja"></small></h2>
+          <p class="nameplate-meta" id="person-meta"></p>
+          <p class="nameplate-line" id="person-line"></p>
+        </div>
+      </div>
+
+      <div class="actions" id="actions" hidden>
+        <button type="button" class="btn default" id="roll">🎲 조선 직업 뽑기</button>
+        <button type="button" class="btn default" id="share" hidden>공유하기</button>
+        <a class="btn" id="save" hidden>그림 저장</a>
+        <button type="button" class="btn" id="redraw" hidden>다시 그리기</button>
+        <button type="button" class="btn" id="reroll" hidden>다른 직업 뽑기</button>
+        <button type="button" class="btn" id="reset">다른 사진</button>
+      </div>
+
+      <div class="palette" aria-hidden="true">
+        <div class="current-colors"><span class="fg"></span><span class="bg"></span></div>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <footer class="statusbar">
+        <span class="cell grow" id="status" role="status">사진을 끌어다 놓거나, 붙여넣거나, 골라 주세요.</span>
+        <span class="cell" id="timer" hidden></span>
+        <span class="cell models" id="models"></span>
+      </footer>
+    </section>
+
+    <!-- 일대기 창 -->
+    <section class="window record" aria-labelledby="record-title-bar">
+      <header class="titlebar">
+        <svg class="titlebar-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.5h8l2.5 2.5v10.5h-10.5z" fill="#f6efdc" stroke="#000"/><path d="M5 6h6M5 8h6M5 10h6M5 12h4" stroke="#8a1c1c"/></svg>
+        <h2 id="record-title-bar"><span id="record-file">전생기록</span>.txt - 메모장</h2>
+        <div class="titlebar-buttons" aria-hidden="true"><span>_</span><span>□</span><span>×</span></div>
+      </header>
+      <nav class="menubar" aria-hidden="true">
+        <span><u>파</u>일(F)</span><span><u>편</u>집(E)</span><span><u>서</u>식(O)</span><span><u>보</u>기(V)</span><span><u>도</u>움말(H)</span>
+      </nav>
+      <div class="record-body" id="record" aria-live="polite"></div>
+      <div class="actions record-actions" id="record-actions" hidden>
+        <button type="button" class="btn" id="rewrite">다른 인생 쓰기</button>
+        <button type="button" class="btn" id="copy">글 복사</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 직업 뽑기 룰렛 -->
+  <dialog class="window dialog roulette" id="roulette" aria-labelledby="roulette-title">
+    <header class="titlebar">
+      <h2 id="roulette-title">전생 직업 뽑기</h2>
+      <div class="titlebar-buttons" aria-hidden="true"><span>×</span></div>
+    </header>
+    <div class="dialog-body">
+      <p class="roulette-lead" id="roulette-lead">당신은 조선시대에…</p>
+      <div class="reel" aria-live="polite">
+        <span class="reel-name" id="reel-name"></span>
+        <span class="reel-hanja" id="reel-hanja"></span>
+      </div>
+      <p class="reel-desc" id="reel-desc">&nbsp;</p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn default" id="roulette-ok" disabled>확인</button>
+    </div>
+  </dialog>
+
+  <!-- 공유 썸네일 -->
+  <dialog class="window dialog share-dialog" id="share-dialog" aria-labelledby="share-title">
+    <header class="titlebar">
+      <h2 id="share-title">공유하기 - 썸네일</h2>
+      <div class="titlebar-buttons"><button type="button" class="close-x" id="share-x" aria-label="닫기">×</button></div>
+    </header>
+    <div class="dialog-body">
+      <div class="thumb-slot" id="thumb-slot"></div>
+      <p class="thumb-caption" id="thumb-caption"></p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn default" id="share-native" hidden>공유하기…</button>
+      <a class="btn" id="share-save" hidden>이미지 저장</a>
+      <button type="button" class="btn" id="share-copy" hidden>글 복사</button>
+      <button type="button" class="btn" id="share-retry" hidden>다시 만들기</button>
+      <button type="button" class="btn" id="share-close">닫기</button>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

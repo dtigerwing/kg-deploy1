@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>그림판 시인</title>
+  <meta name="description" content="사진을 그림판에서 마우스로 그린 낙서로 바꾸고, 사진 속 주인공에게 이름과 시를 지어 드려요.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 14l1-4 8-8 3 3-8 8z' fill='%23ffd23f' stroke='%23000'/%3E%3Cpath d='M2 14l1-4 3 3z' fill='%23000'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="desktop">
+
+    <!-- 그림판 창 -->
+    <section class="window paint" aria-labelledby="paint-title">
+      <header class="titlebar">
+        <svg class="titlebar-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 14l1-4 8-8 3 3-8 8z" fill="#ffd23f" stroke="#000"/><path d="M2 14l1-4 3 3z"/></svg>
+        <h1 id="paint-title"><span id="doc-name">제목 없음</span> - 그림판 시인</h1>
+        <div class="titlebar-buttons" aria-hidden="true"><span>_</span><span>□</span><span>×</span></div>
+      </header>
+      <nav class="menubar" aria-hidden="true">
+        <span><u>파</u>일(F)</span><span><u>편</u>집(E)</span><span><u>보</u>기(V)</span><span><u>이</u>미지(I)</span><span><u>색</u>(C)</span><span><u>도</u>움말(H)</span>
+      </nav>
+
+      <div class="paint-body">
+        <aside class="toolbox" id="toolbox" aria-hidden="true"></aside>
+
+        <div class="workspace" id="workspace">
+          <!-- 1. 사진 고르기 -->
+          <div class="dropzone" id="dropzone">
+            <div class="ants">
+              <svg class="drop-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 14l1-4 8-8 3 3-8 8z" fill="#ffd23f" stroke="#000" stroke-width=".7"/><path d="M2 14l1-4 3 3z"/><path d="M9.5 3.5l3 3" stroke="#000" stroke-width=".7"/></svg>
+              <p class="drop-title">사진을 여기에 끌어다 놓으세요</p>
+              <p class="drop-sub">또는 <kbd>Ctrl</kbd>+<kbd>V</kbd> 로 붙여넣기</p>
+              <button type="button" class="btn default" id="pick">사진 고르기…</button>
+              <p class="drop-note">사진을 마우스로 막 그린 그림판 낙서로 바꿔 드려요.<br>사람·동물·자연물이 있으면 이름을 지어 시도 한 편 써 드려요.</p>
+              <div class="key-warning" id="key-warning" hidden>
+                <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3L30 28H2z" fill="#ffd23f" stroke="#000"/><path d="M15 11h2v9h-2zM15 22h2v2h-2z"/></svg>
+                <p><b>API 키가 아직 없어요.</b><br>프로젝트 폴더의 <code>.env</code> 파일에서 <code>OPENAI_API_KEY=</code> 뒤에 키를 붙여넣고 저장하세요. 서버를 다시 켤 필요는 없어요.</p>
+              </div>
+            </div>
+            <input type="file" id="file" accept="image/*" hidden>
+          </div>
+
+          <!-- 2. 원본 / 결과 비교 -->
+          <div class="compare" id="compare" hidden>
+            <figure class="sheet">
+              <figcaption>원본 사진</figcaption>
+              <div class="canvas" id="original-slot"><img id="original" alt="올린 원본 사진"></div>
+            </figure>
+            <figure class="sheet">
+              <figcaption>그림판 버전</figcaption>
+              <div class="canvas" id="result-slot"></div>
+            </figure>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions" id="actions" hidden>
+        <button type="button" class="btn default" id="start">그림판으로 바꾸기</button>
+        <button type="button" class="btn" id="redraw" hidden>다시 그리기</button>
+        <a class="btn" id="save" hidden>그림 저장</a>
+        <button type="button" class="btn" id="reset">다른 사진</button>
+      </div>
+
+      <div class="palette" aria-hidden="true">
+        <div class="current-colors"><span class="fg"></span><span class="bg"></span></div>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <footer class="statusbar">
+        <span class="cell grow" id="status" role="status">사진을 끌어다 놓거나, 붙여넣거나, 골라 주세요.</span>
+        <span class="cell" id="timer" hidden></span>
+        <span class="cell models" id="models"></span>
+      </footer>
+    </section>
+
+    <!-- 메모장 창 -->
+    <section class="window notepad" aria-labelledby="poem-title-bar">
+      <header class="titlebar">
+        <svg class="titlebar-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.5h8l2.5 2.5v10.5h-10.5z" fill="#fff" stroke="#000"/><path d="M5 6h6M5 8h6M5 10h6M5 12h4" stroke="#000080"/></svg>
+        <h2 id="poem-title-bar"><span id="poem-file">시</span>.txt - 메모장</h2>
+        <div class="titlebar-buttons" aria-hidden="true"><span>_</span><span>□</span><span>×</span></div>
+      </header>
+      <nav class="menubar" aria-hidden="true">
+        <span><u>파</u>일(F)</span><span><u>편</u>집(E)</span><span><u>서</u>식(O)</span><span><u>보</u>기(V)</span><span><u>도</u>움말(H)</span>
+      </nav>
+      <div class="notepad-body" id="poem" aria-live="polite"></div>
+      <div class="actions notepad-actions" id="poem-actions" hidden>
+        <button type="button" class="btn" id="rewrite">다시 짓기</button>
+        <button type="button" class="btn" id="copy">시 복사</button>
+      </div>
+    </section>
+
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

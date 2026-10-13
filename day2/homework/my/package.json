@@ -1,5 +1,15 @@
 {
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "promote": "node scripts/promote-test.mjs"
+  },
   "devDependencies": {
     "wrangler": "^4.147.0"
+  },
+  "dependencies": {
+    "@vercel/functions": "^3.9.11",
+    "nodemailer": "^10.1.0"
   }
 }

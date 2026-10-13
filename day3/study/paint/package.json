@@ -1,0 +1,17 @@
+{
+  "name": "joseon-paint",
+  "version": "1.0.0",
+  "description": "사진 속 사람을 조선시대 직업 옷을 입힌 그림판 낙서로 바꾸고, 이름과 가상의 일대기를 지어 주는 웹서비스",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.3.0",
+    "multer": "^2.4.0",
+    "openai": "^7.32.0"
+  },
+  "private": true
+}

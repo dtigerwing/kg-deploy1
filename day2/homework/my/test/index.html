@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- test-only:start (정식 배포로 올릴 때 scripts/promote-test.mjs 가 이 블록을 지움) -->
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    .test-badge { position: fixed; left: 14px; bottom: 14px; z-index: 54; padding: .35em .9em; font: 400 .85rem/1.4 var(--display); color: var(--ink); text-decoration: none; background: #fff; border: 2px dashed var(--ink); border-radius: 999px; opacity: .85; }
+    .test-badge:hover { opacity: 1; }
+  </style>
+  <!-- test-only:end -->
+  <title>KIGLE · 아이들의 첫 번째 놀이터</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6C14 6 5 22 5 37c0 13 11 21 27 21s27-8 27-21C59 22 50 6 32 6z' fill='%238fdb6e' stroke='%233a2e5c' stroke-width='4'/%3E%3Cellipse cx='23' cy='31' rx='4' ry='5.5' fill='%233a2e5c'/%3E%3Cellipse cx='41' cy='31' rx='4' ry='5.5' fill='%233a2e5c'/%3E%3C/svg%3E" />
+  <meta name="description" content="꼬마공룡 코코비와 친구들이 사는 KIGLE의 놀이터. 앱·영상·동요로 만나는 게임 11종, 전 세계 다운로드 1억 5천만+." />
+  <!-- 링크 공유 미리보기 (카카오톡·슬랙·디스코드·X 등) -->
+  <link rel="canonical" href="https://kg-deploy1-wheat.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="KIGLE" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:url" content="https://kg-deploy1-wheat.vercel.app/" />
+  <meta property="og:title" content="KIGLE · 아이들의 첫 번째 놀이터" />
+  <meta property="og:description" content="꼬마공룡 코코비와 친구들이 사는 KIGLE의 놀이터. 앱·영상·동요로 만나는 게임 11종, 전 세계 다운로드 1억 5천만+." />
+  <meta property="og:image" content="https://kg-deploy1-wheat.vercel.app/og-image.jpg?v=4" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="KIGLE 놀이터 첫 화면 — 아이들의 첫 번째 놀이터와 코코비 친구들" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="KIGLE · 아이들의 첫 번째 놀이터" />
+  <meta name="twitter:description" content="꼬마공룡 코코비와 친구들이 사는 KIGLE의 놀이터. 앱·영상·동요로 만나는 게임 11종, 전 세계 다운로드 1억 5천만+." />
+  <meta name="twitter:image" content="https://kg-deploy1-wheat.vercel.app/og-image.jpg?v=4" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/test/styles.css" />
+  <link rel="stylesheet" href="/test/chatbot.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="logo" href="#hero" aria-label="KIGLE 처음으로">
+      <span class="logo-blob" aria-hidden="true"><i></i><i></i></span>KIGLE
+    </a>
+    <nav class="nav-links" aria-label="주요 메뉴">
+      <a href="#friends">친구들</a>
+      <a href="#reel">영상관</a>
+      <a href="#games">게임</a>
+      <a href="#about">소개</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="sound-toggle" type="button" aria-pressed="false" title="효과음 켜기">
+        <span class="on">🔊</span><span class="off">🔈</span>
+      </button>
+      <a class="btn btn-small" href="#contact">앱 받기</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. 히어로: 물리 놀이터 -->
+    <section id="hero" class="hero">
+      <canvas class="playground" aria-hidden="true"></canvas>
+      <div class="hero-copy">
+        <p class="badge">꼬마공룡 코코비 &amp; 친구들</p>
+        <h1>아이들의 첫 번째<br /><span class="wiggle">놀이터</span></h1>
+        <p class="lead">KIGLE은 앱, 영상, 동요로 아이들의 첫 번째 놀이터를 만들어요.<br />전 세계 앱 다운로드 <b>1억 5천만+</b>, 지금도 새로운 놀이를 준비 중!</p>
+        <div class="hero-cta">
+          <a class="btn" href="#games">게임 구경하기</a>
+          <a class="btn btn-ghost" href="#reel">▶ 영상 보기</a>
+        </div>
+      </div>
+      <p class="hero-hint" aria-hidden="true"><span>👆</span> 친구들을 잡아서 던져 보세요<span class="hint-more"> · 빈 곳을 누르면 새 친구가 나와요</span></p>
+    </section>
+
+    <!-- 히어로와 친구들 사이: 구름만 지나가는 구간 (배경 이미지가 있을 때만 생김) -->
+    <div class="cloud-gap" aria-hidden="true"></div>
+
+    <!-- 2. 코코비 친구들 -->
+    <section id="friends" class="friends">
+      <div class="clouds" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="section-head">
+        <p class="eyebrow">코코비 친구들</p>
+        <h2>안녕! 우리는 꼬마공룡 코코비</h2>
+        <p class="equation" aria-label="코코 더하기 러비는 코코비">
+          <span style="--c: var(--pink)">코코</span><b aria-hidden="true">+</b><span style="--c: var(--yellow)">러비</span><b aria-hidden="true">=</b><span class="eq-total" style="--c: var(--green)">코코비</span>
+        </p>
+        <p class="section-lead">공룡이 멸종하지 않은 세상, 코코와 러비가 사는 마을로 놀러 오세요!</p>
+      </div>
+      <button class="family" type="button" aria-label="코코비 친구들에게 손 흔들기">
+        <img class="family-img" alt="손을 흔드는 코코비 캐릭터들" />
+      </button>
+      <div class="duo"></div>
+      <div class="friends-more">
+        <div class="crowd-card">
+          <h3>함께 노는 친구들</h3>
+          <p>눌러서 인사해 보세요!</p>
+          <p class="crowd-count" aria-live="polite"></p>
+          <ul class="crowd"></ul>
+          <div class="confetti" aria-hidden="true"></div>
+        </div>
+        <div class="egg-card">
+          <h3>공룡 알 깨기</h3>
+          <p class="egg-hint" aria-live="polite">톡톡 세 번 두드리면 누가 나올까?</p>
+          <div class="egg-stage" data-hits="0"></div>
+          <button class="btn btn-small egg-again" type="button" hidden>또 깨기 🥚</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 영상관 (Merci-Michel 쇼릴 구조) -->
+    <section id="reel" class="reel">
+      <!-- 스크롤하는 동안 무대가 화면에 고정되고, 그만큼 커튼이 걷힘 -->
+      <div class="reel-pin">
+      <div class="reel-stage">
+      <div class="section-head">
+        <p class="eyebrow">놀이 영상관</p>
+        <h2>오늘은 어떤 놀이를 볼까?</h2>
+      </div>
+      <div class="tv">
+        <div class="tv-screen">
+          <img class="tv-img" alt="" />
+          <button class="tv-play" type="button" aria-label="예고편 재생"><span>▶</span></button>
+          <div class="tv-caption">
+            <span class="tv-count"></span>
+            <strong class="tv-title"></strong>
+            <span class="tv-runtime"></span>
+          </div>
+        </div>
+        <div class="tv-antenna" aria-hidden="true"><i></i><i></i></div>
+        <div class="tv-knobs" aria-hidden="true"><i></i><i></i></div>
+        <img class="prop prop-popcorn" data-gen="prop-popcorn.png" alt="" />
+      </div>
+      <div class="curtains" aria-hidden="true">
+        <div class="curtain curtain-left"></div>
+        <div class="curtain curtain-right"></div>
+        <p class="curtain-sign">🎬 곧 상영해요!<span>스크롤하면 막이 열려요</span></p>
+      </div>
+      </div>
+      </div>
+      <div class="filmstrip" role="tablist" aria-label="예고편 목록"></div>
+      <div class="reel-more">
+        <span class="reel-stat">📺 키글 유튜브 구독자 <b>1,800만+</b></span>
+        <a class="btn btn-ghost" data-store="youtube" target="_blank" rel="noopener">유튜브 채널 보러 가기 →</a>
+      </div>
+    </section>
+
+    <!-- 4. 게임: 장난감 상자 -->
+    <section id="games" class="games">
+      <div class="section-head">
+        <p class="eyebrow">장난감 상자</p>
+        <h2>어떤 놀이가 좋아?</h2>
+        <img class="prop prop-toybox" data-gen="prop-toybox.png" alt="" />
+      </div>
+      <div class="chips" role="tablist" aria-label="게임 분류"></div>
+      <ul class="game-grid"></ul>
+    </section>
+
+    <!-- 5. 소개 (kigle.co.kr 공식 수치) -->
+    <section id="about" class="about">
+      <div class="section-head">
+        <p class="eyebrow">우리는요</p>
+        <h2>전 세계 아이들의 첫 번째 놀이터</h2>
+        <p class="section-lead">KIGLE은 2015년부터 앱, 영상, 동요로 아이들의 첫 놀이를 만들어 왔어요.</p>
+      </div>
+      <div class="about-stage">
+        <img class="about-img" alt="모니터 주위에 모여 노는 코코비 친구들" loading="lazy" />
+      </div>
+      <ul class="stats">
+        <li style="--c: var(--sky)"><b data-count="150000000" data-format="kr" data-suffix="+">0</b><span>전 세계 앱 다운로드</span></li>
+        <li style="--c: var(--pink)"><b data-count="18000000" data-format="kr" data-suffix="+">0</b><span>유튜브 구독자</span></li>
+        <li style="--c: var(--green)"><b data-count="142" data-suffix="개국">0</b><span>코코비 동요가 흐르는 나라</span></li>
+        <li style="--c: var(--yellow)"><b data-count="49" data-suffix="장">0</b><span>코코비 동요 앨범</span></li>
+      </ul>
+
+      <h3 class="sub-head">앱 · 영상 · 동요, 놀이가 이어져요</h3>
+      <ul class="values mix">
+        <li style="--c: var(--sky)">
+          <span class="v-icon" data-gen-icon="icon-app.png">📱</span>
+          <h3>앱</h3>
+          <p>누르고 끌면 바로 반응하는 인터랙티브 앱. 코코비 앱만 8,000만 다운로드를 넘었어요.</p>
+        </li>
+        <li style="--c: var(--pink)">
+          <span class="v-icon" data-gen-icon="icon-video.png">📺</span>
+          <h3>영상</h3>
+          <p>코코비 한국어·영어·스페인어 채널과 키글TV에서 노래와 이야기를 만나요.</p>
+        </li>
+        <li style="--c: var(--yellow)">
+          <span class="v-icon" data-gen-icon="icon-music.png">🎵</span>
+          <h3>동요</h3>
+          <p>멜론, 스포티파이, 애플 뮤직에서 6개 언어로 듣는 코코비 동요.</p>
+        </li>
+      </ul>
+
+      <h3 class="sub-head">우리가 놀이를 만드는 방법</h3>
+      <ul class="values">
+        <li style="--c: var(--pink)">
+          <span class="v-icon" data-gen-icon="icon-touch.png">🎈</span>
+          <h3>손끝으로 바로</h3>
+          <p>글을 몰라도 괜찮아요. 누르고, 끌고, 흔들면 바로 반응하는 놀이를 만들어요.</p>
+        </li>
+        <li style="--c: var(--sky)">
+          <span class="v-icon" data-gen-icon="icon-buddy.png">🧸</span>
+          <h3>코코비와 함께</h3>
+          <p>치과, 병원, 빵집, 우주까지. 익숙한 친구와 함께라면 처음 해보는 일도 두렵지 않아요.</p>
+        </li>
+        <li style="--c: var(--yellow)">
+          <span class="v-icon" data-gen-icon="icon-learn.png">🌱</span>
+          <h3>배움은 몰래</h3>
+          <p>양치 습관, 직업, 공룡 이름. 신나게 놀다 보면 어느새 하나씩 알게 돼요.</p>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- 6. 푸터: 볼풀 -->
+  <footer id="contact" class="footer">
+    <canvas class="ballpit" aria-hidden="true"></canvas>
+    <div class="footer-copy">
+      <h2>코코비랑 놀자!</h2>
+      <p>더 재밌고, 더 두근두근한 앱들이 기다리고 있어요.</p>
+      <div class="stores">
+        <a class="btn store" data-store="play" target="_blank" rel="noopener">Google Play</a>
+        <a class="btn store" data-store="apple" target="_blank" rel="noopener">App Store</a>
+        <a class="btn store" data-store="youtube" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 게임 상세 -->
+  <dialog class="sheet" aria-labelledby="sheet-title">
+    <button class="sheet-close" type="button" aria-label="닫기">✕</button>
+    <div class="sheet-body"></div>
+  </dialog>
+
+  <!-- 영상 -->
+  <dialog class="player" aria-label="예고편">
+    <button class="sheet-close" type="button" aria-label="닫기">✕</button>
+    <div class="player-frame"></div>
+  </dialog>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <!-- test-only:start -->
+  <a class="test-badge" href="/" title="지금 보는 화면은 테스트 빌드예요">🧪 테스트 빌드 · 정식 보기</a>
+  <!-- test-only:end -->
+
+  <script type="module" src="/test/js/main.js"></script>
+  <script type="module" src="/test/js/chatbot.js"></script>
+</body>
+</html>

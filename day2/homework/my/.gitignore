@@ -4,3 +4,4 @@ output/
 node_modules/
 dist/
 .wrangler/
+.data/

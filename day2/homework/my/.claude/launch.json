@@ -4,8 +4,20 @@
     {
       "name": "kigle-mockup",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["serve.py", "5180"],
+      "runtimeArgs": [
+        "serve.py",
+        "5180"
+      ],
       "port": 5180
+    },
+    {
+      "name": "kigle-dev",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/dev-server.mjs",
+        "5181"
+      ],
+      "port": 5181
     }
   ]
 }

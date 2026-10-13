@@ -1,0 +1,17 @@
+{
+  "name": "paint-poet",
+  "version": "1.0.0",
+  "description": "사진을 그림판 낙서로 바꾸고, 사진 속 주인공에게 이름과 시를 지어주는 웹서비스",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.3.0",
+    "multer": "^2.4.0",
+    "openai": "^7.32.0"
+  },
+  "private": true
+}
