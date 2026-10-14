@@ -1,10 +1,9 @@
 // 우측 하단 챗봇
-// 1) 처음 열면 이름·이메일·개인정보 동의를 받아 대화 시작 (/api/session)
+// 1) 처음 열면 바로 대화 시작 (/api/session, 이름·이메일 없이 누구나)
 // 2) 입력하는 동안 잠깐 멈출 때마다 감정 분석 요청 (/api/emotion, 결과는 화면에 보이지 않음)
 // 3) 질문은 /api/chat — 답은 서버가 정함: 자주 묻는 질문은 저장된 답, 나머지는 규칙 검사 후 AI
 
 const SID_KEY = 'kigle-chat-sid';
-const PROFILE_KEY = 'kigle-chat-profile';
 const TYPING_DELAY = 700; // 입력이 이만큼 멈추면 감정 분석
 
 const safe = {
@@ -67,7 +66,7 @@ root.innerHTML = `
     <div class="cb-log" role="log" aria-live="polite"></div>
     <form class="cb-form">
       <label class="cb-sr" for="cb-input">질문 입력</label>
-      <textarea id="cb-input" rows="1" maxlength="300" placeholder="이름과 이메일을 먼저 알려 주세요" enterkeyhint="send" disabled></textarea>
+      <textarea id="cb-input" rows="1" maxlength="300" placeholder="궁금한 걸 적어 주세요" enterkeyhint="send" disabled></textarea>
       <button class="cb-send" type="submit" aria-label="보내기" disabled>➤</button>
     </form>
     <p class="cb-notice"></p>
@@ -83,8 +82,8 @@ const input = $('#cb-input');
 const sendBtn = $('.cb-send');
 const tip = $('.cb-tip');
 
-let faq = null; // { botName, greeting, notice, consent, maxChars, typingAnalysis, categories, items }
-let profile = null; // { name } — 대화를 시작했으면 있음
+let faq = null; // { botName, greeting, notice, maxChars, typingAnalysis, categories, items }
+let started = false; // 서버에 대화가 만들어졌는지
 let busy = false;
 let locked = false;
 
@@ -107,54 +106,12 @@ function setInput(enabled, placeholder) {
   input.placeholder = placeholder;
 }
 
-// ---------- 대화 시작: 이름 · 이메일 · 동의 ----------
-function startForm() {
-  const f = el('form', 'cb-start');
-  f.noValidate = true;
-  f.innerHTML = `
-    <label class="cb-field"><span>이름</span><input name="name" maxlength="20" autocomplete="name" placeholder="예: 김코코" required /></label>
-    <label class="cb-field"><span>이메일</span><input name="email" type="email" maxlength="100" autocomplete="email" placeholder="name@example.com" required /></label>
-    <details class="cb-consent"><summary>개인정보 수집·이용 안내 보기</summary><p></p></details>
-    <label class="cb-agree"><input name="consent" type="checkbox" required /> <span>개인정보 수집·이용에 동의해요 (필수)</span></label>
-    <p class="cb-error" role="alert"></p>
-    <button class="cb-start-btn" type="submit">대화 시작하기</button>`;
-  f.querySelector('.cb-consent p').textContent = faq.consent;
-  f.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const err = f.querySelector('.cb-error');
-    const field = (n) => f.elements.namedItem(n); // f.name 은 폼 자체의 name 속성이라 이렇게 꺼냄
-    const name = field('name').value.trim();
-    const email = field('email').value.trim();
-    if (!name) return (err.textContent = '이름을 적어 주세요.');
-    if (!email || !field('email').checkValidity()) return (err.textContent = '이메일 주소를 확인해 주세요.');
-    if (!field('consent').checked) return (err.textContent = '대화를 시작하려면 동의가 필요해요.');
-    err.textContent = '';
-    const btn = f.querySelector('button');
-    btn.disabled = true;
-    try {
-      const res = await post('/api/session', { name, email, consent: true, page: location.pathname, referrer: document.referrer });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || '잠시 후 다시 시도해 주세요.');
-      profile = { name: data.name };
-      safe.set(PROFILE_KEY, JSON.stringify(profile));
-      f.closest('.cb-row').remove();
-      bubble('bot', data.greeting, topics());
-      setInput(true, '궁금한 걸 적어 주세요');
-      input.focus({ preventScroll: true });
-    } catch (x) {
-      err.textContent = x.message;
-      btn.disabled = false;
-    }
-  });
-  return f;
-}
-
-function askProfile(message) {
-  profile = null;
-  safe.del(PROFILE_KEY);
-  setInput(false, '이름과 이메일을 먼저 알려 주세요');
-  bubble('bot', message, startForm());
-  setTimeout(() => log.querySelector('.cb-start input')?.focus({ preventScroll: true }), 50);
+// ---------- 대화 시작 (창을 열 때, 그리고 대화가 만료됐을 때) ----------
+async function startSession() {
+  const res = await post('/api/session', { page: location.pathname, referrer: document.referrer });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || '잠시 후 다시 시도해 주세요.');
+  started = true;
 }
 
 // ---------- 주제 → 자주 묻는 질문 ----------
@@ -192,20 +149,18 @@ async function load() {
     $('#cb-name').textContent = faq.botName;
     $('.cb-notice').textContent = faq.notice;
     input.maxLength = faq.maxChars;
-    try {
-      profile = JSON.parse(safe.get(PROFILE_KEY) || 'null');
-    } catch {
-      profile = null;
-    }
-    if (profile?.name) {
-      bubble('bot', `${profile.name} 님, 이어서 물어보세요.`, topics());
-      setInput(true, '궁금한 걸 적어 주세요');
-    } else {
-      askProfile(faq.greeting);
-    }
   } catch {
     faq = null;
     bubble('bot', '앗, 챗봇을 불러오지 못했어요. 잠시 후 다시 열어 주세요.');
+    return;
+  }
+  try {
+    await startSession();
+    bubble('bot', faq.greeting, topics());
+    setInput(true, '궁금한 걸 적어 주세요');
+    input.focus({ preventScroll: true });
+  } catch (x) {
+    bubble('bot', x.message);
   }
 }
 
@@ -227,7 +182,7 @@ function cancelTyping() {
 }
 
 function scheduleTyping() {
-  if (!faq?.typingAnalysis || !profile || locked) return;
+  if (!faq?.typingAnalysis || !started || locked) return;
   clearTimeout(typingTimer);
   typingTimer = setTimeout(() => {
     const text = input.value.trim();
@@ -241,7 +196,7 @@ function scheduleTyping() {
 
 // ---------- 질문 보내기 ----------
 async function ask(payload, shownText) {
-  if (busy || locked || !profile) return;
+  if (busy || locked || !started) return;
   busy = true;
   cancelTyping();
   lastAnalyzed = '';
@@ -250,10 +205,14 @@ async function ask(payload, shownText) {
   const typing = bubble('bot', null, el('span', 'cb-typing', '•••'));
   typing.setAttribute('aria-label', '답변을 쓰는 중');
   try {
-    const res = await post('/api/chat', payload);
+    let res = await post('/api/chat', payload);
+    if (res.status === 409) {
+      // 대화가 만료됨(하루) → 새로 시작하고 한 번 더
+      await startSession();
+      res = await post('/api/chat', payload);
+    }
     const data = await res.json().catch(() => ({}));
     typing.closest('.cb-row').remove();
-    if (data.needProfile) return askProfile(data.reply);
     if (!res.ok) {
       bubble('bot', data.error || '앗, 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
       return;
@@ -282,7 +241,7 @@ async function ask(payload, shownText) {
     bubble('bot', '인터넷 연결을 확인하고 다시 시도해 주세요.');
   } finally {
     busy = false;
-    if (!locked && profile) sendBtn.disabled = false;
+    if (!locked && started) sendBtn.disabled = false;
   }
 }
 
@@ -294,7 +253,7 @@ function open() {
   fab.setAttribute('aria-expanded', 'true');
   fab.setAttribute('aria-label', '챗봇 닫기');
   if (!log.childElementCount) load();
-  else if (profile && !locked) setTimeout(() => input.focus({ preventScroll: true }), 50);
+  else if (started && !locked) setTimeout(() => input.focus({ preventScroll: true }), 50);
 }
 
 function close() {
