@@ -13,7 +13,7 @@ export const POST = route(async (request) => {
   if (!emotionReady || !settings.emotion.enabled || !settings.emotion.typingAnalysis) return json({ ok: true, skipped: true });
 
   const sess = await store.get(`sess:${sessionId}`);
-  if (!sess?.profile) throw new HttpError(403, '대화를 먼저 시작해 주세요.');
+  if (!(sess?.started || sess?.profile)) throw new HttpError(403, '대화를 먼저 시작해 주세요.');
   if (sess.blockedUntil > Date.now()) return json({ ok: true, skipped: true });
 
   const text = String(body.text ?? '').trim();

@@ -84,4 +84,9 @@ export function sessionIdFrom(body) {
 // 제어 문자·꺾쇠 제거 후 길이 자르기
 export const clean = (v, n) => String(v ?? '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, n);
 
-export const fill = (tpl, vars) => String(tpl || '').replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+// {name} 이 비어 있으면 '{name} 님, ' 같은 호칭을 통째로 지움 (이름을 받지 않으므로)
+export function fill(tpl, vars) {
+  let s = String(tpl || '');
+  if ('name' in vars && !vars.name) s = s.replace(/\{name\}\s*님\s*[,，]?\s*/g, '');
+  return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+}

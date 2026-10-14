@@ -266,7 +266,7 @@ async function loadChatList() {
     ? chats.map((c) => `
       <li><button class="chat-pick ${c.id === openChat ? 'active' : ''}" data-id="${esc(c.id)}">
         <span class="chat-top"><b>${esc(c.name)}</b><small>${fmtTime(c.lastAt)}</small></span>
-        <span class="chat-mail">${esc(c.email)}</span>
+        ${c.email ? `<span class="chat-mail">${esc(c.email)}</span>` : ''}
         <span class="chat-last">${esc(c.lastText || '(아직 질문 없음)')}</span>
         <span class="chat-tags">${emoChip(c.last)}${c.peak && c.peak.top !== c.last?.top ? emoChip(c.peak, ' 최고') : ''}<span class="tag">💬 ${c.count}</span>${c.blocked ? '<span class="tag draft">⛔ 제한됨</span>' : c.strikes ? `<span class="tag draft">⚠️ 경고 ${c.strikes}</span>` : ''}</span>
       </button></li>`).join('')
@@ -294,9 +294,9 @@ async function showChat(id, quiet) {
       <button class="btn small danger del-chat" type="button">🗑 대화 삭제</button>
     </div>
     <dl class="chat-info">
-      <dt>📧 이메일</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>
+      ${c.email ? `<dt>📧 이메일</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>` : ''}
       <dt>🕒 시작</dt><dd>${fmtTime(c.startedAt)} · 마지막 ${fmtTime(c.lastAt)}</dd>
-      <dt>✅ 동의</dt><dd>${c.consent ? `${fmtTime(c.consent.at)} (문구 버전 ${esc(c.consent.version)}) · ${fmtTime(expires)} 자동 삭제` : '-'}</dd>
+      ${c.consent ? `<dt>✅ 동의</dt><dd>${fmtTime(c.consent.at)} (문구 버전 ${esc(c.consent.version)}) · ${fmtTime(expires)} 자동 삭제</dd>` : ''}
       <dt>🌏 접속</dt><dd>${esc(c.place || '지역 모름')} · ${esc(c.ip)}</dd>
       <dt>💻 기기</dt><dd class="small">${esc(c.ua || '-')}</dd>
       <dt>📄 페이지</dt><dd>${esc(c.page || '-')} ${c.referrer ? `· ${esc(c.referrer)}에서 옴` : ''}</dd>
@@ -454,7 +454,6 @@ const STRIKE_LABELS = {
   ipBlockMinutes: ['접속 주소 제한 시간(분)', ''],
 };
 const MESSAGE_LABELS = {
-  welcome: '대화를 시작했을 때 ({name}=이용자 이름)',
   match: 'AI 없이 비슷한 질문을 찾아 답할 때 (답변 앞에 붙음)', suggest: 'AI 없이 비슷한 질문 후보를 보여 줄 때', noMatch: 'AI 없이 비슷한 질문을 못 찾았을 때',
   unknown: '지식베이스에 답이 없을 때', offTopic: '무관한 질문', injection: '프롬프트 캐내기 시도', wasteful: '반복·낭비성 질문',
   repeat: '같은 질문을 한 번 더 했을 때 (앞 답변 앞에 붙음)', gibberish: '의미 없는 입력', smalltalk: '인사·감사 ({name}=이용자 이름)',
@@ -485,13 +484,12 @@ function renderRules() {
       <h2>📝 기본 정보</h2>
       ${textField('botName', '챗봇 이름', s.botName, 1)}
       ${textField('greeting', '첫인사', s.greeting, 3)}
-      ${textField('notice', '대화 창 아래 안내 문구', s.notice, 2)}
+      ${textField('notice', '대화 창 아래 안내 문구 ({days}=보관 기간)', s.notice, 2)}
     </div>
     <div class="card">
-      <h2>🔐 개인정보 동의 · 보관</h2>
-      <p class="muted">대화를 시작하기 전에 이름·이메일과 함께 이 문구에 동의를 받아요. 문구를 바꾸면 이후 대화부터 새 버전으로 기록돼요. 법적 고지에 맞는지 꼭 검토해 주세요.</p>
+      <h2>🔐 채팅 내역 보관</h2>
+      <p class="muted">이름·이메일은 받지 않아요. 대화 내용·감정 분석 결과·접속 정보만 아래 기간 동안 보관해요.</p>
       <label class="field"><span>보관 기간(일)</span><input type="number" name="privacy.retentionDays" value="${s.privacy.retentionDays}" min="1" max="3650" style="max-width:140px" /><small>대화 시작일로부터 이 기간이 지나면 채팅 내역이 자동 삭제돼요. 기본값 ${defaults.privacy.retentionDays}</small></label>
-      ${textField('privacy.consent', '동의 문구 ({days}=보관 기간)', s.privacy.consent, 7)}
     </div>
     <div class="card">
       <h2>🤖 AI 답변 지침</h2>

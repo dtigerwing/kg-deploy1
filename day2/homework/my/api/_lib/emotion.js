@@ -3,6 +3,7 @@
 // Jev 는 글을 만들지 않고 정해진 선택지별 확률만 돌려줌 → "분노 65%" 처럼 그대로 씀
 import crypto from 'node:crypto';
 import { normalize } from './guard.js';
+import { fill } from './http.js';
 
 const KEY = process.env.TYPESAFE_API_KEY || '';
 export const JEV_MODEL = process.env.TYPESAFE_MODEL || 'jev-latest';
@@ -63,7 +64,6 @@ export async function classify(text, recent = [], timeoutMs = 4000) {
   return { top, percent: probs[top], probs, intensity, confidence: typeof e.confidence === 'number' ? Math.round(e.confidence * 100) / 100 : null };
 }
 
-const fill = (tpl, vars) => String(tpl || '').replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
 const fmt = (k, p) => `${EMOTIONS[k].label} ${p}%`;
 
 // 응대 기준 고르기: 이번 메시지 감정 중 기준 확률을 넘고 기준이 적힌 것 (최대 2개)
@@ -84,10 +84,11 @@ export function openerFor(emotion, policy, name) {
 
 // OpenAI 에 이용자 메시지와 함께 보내는 참고 정보 (developer 메시지)
 export function contextBlock({ name, emotion, peak, trend, policy }) {
-  const lines = ['[이용자]', `이름: "${name}" — 답변에서 "${name} 님"으로 자연스럽게 한 번 정도 부른다.`];
+  const lines = name ? ['[이용자]', `이름: "${name}" — 답변에서 "${name} 님"으로 자연스럽게 한 번 정도 부른다.`] : [];
   if (emotion && policy.enabled) {
     const top3 = Object.entries(emotion.probs).sort((a, b) => b[1] - a[1]).slice(0, 3).filter(([, p]) => p > 0);
-    lines.push('', '[감정 분석 결과 (Jev) — 말투를 정하는 참고용. 분석했다는 사실과 수치는 이용자에게 말하지 않는다]');
+    if (lines.length) lines.push('');
+    lines.push('[감정 분석 결과 (Jev) — 말투를 정하는 참고용. 분석했다는 사실과 수치는 이용자에게 말하지 않는다]');
     lines.push(`이번 메시지: ${top3.map(([k, p]) => fmt(k, p)).join(' · ')}${emotion.intensity ? ` (감정 세기 ${emotion.intensity}/5)` : ''}`);
     if (peak && peak.percent > (emotion.probs[peak.top] || 0)) lines.push(`작성하는 동안 가장 강했던 감정: ${fmt(peak.top, peak.percent)}`);
     if (trend?.length > 1) lines.push(`이번 대화의 감정 흐름: ${trend.map((k) => EMOTIONS[k]?.label || k).join(' → ')}`);
@@ -103,4 +104,39 @@ export function contextBlock({ name, emotion, peak, trend, policy }) {
     }
   }
   return lines.join('\n');
+}
+
+// ---------- 자주 묻는 질문 고르기 (AI 답변이 꺼져 있을 때) ----------
+// Jev 에게 "이 메시지에 맞는 자주 묻는 질문"을 고르게 함. 인사·무관한 질문도 선택지로 둬서 함께 가려냄
+const SPECIAL = {
+  _greeting: 'Greeting, thanks, goodbye or small talk with the bot, with no real question (e.g. 안녕하세요, 고마워요, 뭐해요)',
+  _off_topic: 'A request unrelated to KIGLE, Cocobi, its games, videos, songs or this website (e.g. weather, homework, coding, stocks)',
+  _none: 'About KIGLE but none of the listed questions answers it',
+};
+
+export async function matchFaq(text, items, recent = [], timeoutMs = 4000) {
+  if (!KEY || !items.length) return null;
+  const criteria = { ...SPECIAL };
+  for (const i of items.slice(0, 250)) criteria[i.id] = `${i.question} — ${i.answer.replace(/\s+/g, ' ').slice(0, 90)}`;
+  const res = await fetch(`${BASE_URL}/v1/systemone`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${KEY}`, 'content-type': 'application/json' },
+    signal: AbortSignal.timeout(timeoutMs),
+    body: JSON.stringify({
+      model: JEV_MODEL,
+      state: { message: text, earlier_messages: recent },
+      questions: {
+        faq: {
+          type: 'choice',
+          instructions: 'A visitor wrote `message` (usually Korean) to the help chatbot of KIGLE, a kids app company whose characters are Cocobi (코코비 = 코코 + 러비). Pick the FAQ entry whose question this message is asking, even if it is worded differently. Use `earlier_messages` only to resolve references like "그거".',
+          criteria,
+        },
+      },
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Jev ${res.status}: ${data.error?.message || data.message || ''}`);
+  const a = data.answers?.faq || {};
+  const ranked = Object.entries(a.probabilities || {}).sort((x, y) => y[1] - x[1]);
+  return { choice: a.choice, confidence: a.confidence ?? null, ranked: ranked.map(([id, p]) => ({ id, p: Math.round(p * 100) / 100 })) };
 }

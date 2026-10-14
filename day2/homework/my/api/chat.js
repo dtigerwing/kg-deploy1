@@ -8,7 +8,7 @@ import { loadKb } from './_lib/kb.js';
 import { loadSettings } from './_lib/settings.js';
 import { isGibberish, isSmallTalk, looksLeaked, matchInjection, normalize, rankFaq, similarity } from './_lib/guard.js';
 import { CANARY, askModel, buildInstructions } from './_lib/llm.js';
-import { EMOTIONS, classify, contextBlock, emotionReady, openerFor, pickRules, textHash } from './_lib/emotion.js';
+import { EMOTIONS, classify, contextBlock, emotionReady, matchFaq, openerFor, pickRules, textHash } from './_lib/emotion.js';
 import { appendConv } from './_lib/conv.js';
 import { mailReady, sendMail } from './_lib/mail.js';
 
@@ -37,9 +37,10 @@ export const POST = route(async (request) => {
   const { limits: L, strikes: S, messages: M } = settings;
   const days = settings.privacy.retentionDays;
 
-  // 0. 이름·이메일·동의를 받은 대화만
-  if (!sess?.profile) return json({ needProfile: true, reply: '대화를 시작하려면 이름과 이메일을 먼저 알려 주세요.' }, 403);
-  const { name, email } = sess.profile;
+  // 0. 대화 시작(/api/session)을 거친 대화만 — 화면이 알아서 다시 시작하고 재시도함
+  if (!(sess?.started || sess?.profile)) return json({ needSession: true }, 409);
+  const name = sess.profile?.name || '';
+  const who = name || `방문자 ${sessionId.slice(0, 4)}`;
   sess.emotions ||= [];
   const blocked = () => json({ reply: M.blocked, verdict: 'blocked', blocked: true });
 
@@ -113,15 +114,30 @@ export const POST = route(async (request) => {
     if (exact) {
       result = { verdict: 'answer', source: 'faq', text: exact.answer };
     } else if (!aiOn) {
-      // AI 없이: 확실히 가까운 질문이 하나면 그 답, 애매하면 후보를 버튼으로, 없으면 안내
-      const ranked = rankFaq(message, kb.items.filter((i) => i.enabled));
-      const [top, second] = ranked;
-      if (top && top.score >= 0.6 && top.score - (second?.score || 0) >= 0.1) {
+      // AI 없이: Jev 가 자주 묻는 질문 중 맞는 것을 고름 (인사·무관한 질문도 함께 가려냄)
+      // 확실하면 그 답, 애매하면 후보를 버튼으로. Jev 를 못 쓰면 글자 겹침(rankFaq)으로 대신함
+      const enabled = kb.items.filter((i) => i.enabled);
+      const byId = Object.fromEntries(enabled.map((i) => [i.id, i]));
+      const recent = sess.history.filter((m) => m.role === 'user').slice(-2).map((m) => m.content);
+      const picked = await matchFaq(message, enabled, recent).catch((err) => {
+        console.error('[chat] Jev 질문 고르기 실패', err.message);
+        return null;
+      });
+      const ranked = picked
+        ? picked.ranked.map((r) => ({ id: r.id, item: byId[r.id], score: r.p }))
+        : rankFaq(message, enabled).map((r) => ({ id: r.item.id, item: r.item, score: r.score }));
+      const top = ranked[0];
+      const cands = ranked.filter((r) => r.item && r.score >= (picked ? 0.15 : 0.3));
+      if (top?.id === '_greeting' && top.score >= 0.5) {
+        result = { verdict: 'smalltalk', source: 'rule', text: M.smalltalk };
+      } else if (top?.id === '_off_topic' && top.score >= 0.6) {
+        result = { verdict: 'off_topic', source: 'rule', strike: 'offTopic' };
+      } else if (top?.item && top.score >= 0.6) {
         result = { verdict: 'match', source: 'faq', text: `${M.match} (${top.item.question})\n\n${top.item.answer}` };
-        suggestions = ranked.slice(1).filter((r) => r.score >= 0.4);
-      } else if (ranked.some((r) => r.score >= 0.3)) {
+        suggestions = cands.slice(1, 3);
+      } else if (cands.length) {
         result = { verdict: 'suggest', source: 'rule' };
-        suggestions = ranked.filter((r) => r.score >= 0.3);
+        suggestions = cands.slice(0, 3);
       } else {
         result = { verdict: 'no_match', source: 'rule' };
       }
@@ -171,7 +187,7 @@ export const POST = route(async (request) => {
       const ipBlocked = sessionBlocks >= S.ipBlockAfter;
       if (ipBlocked) await store.set(`block:ip:${info.ip}`, { at: now, reason: k }, S.ipBlockMinutes * 60);
       await store.push('log:blocks', {
-        at: now, type: ipBlocked ? 'ip' : 'session', reason: k, ip: info.ip, sessionId, nickname: name,
+        at: now, type: ipBlocked ? 'ip' : 'session', reason: k, ip: info.ip, sessionId, nickname: who,
         until: now + (ipBlocked ? S.ipBlockMinutes : minutes) * 60000, message: clip(message, 120),
       }, 100);
       text = `${text}\n\n${M.blocked}`;
@@ -204,12 +220,10 @@ export const POST = route(async (request) => {
     const place = [info.country, info.region, info.city].filter(Boolean).join(' ') || '알 수 없음';
     waitUntil(
       sendMail({
-        subject: `[KIGLE 챗봇] 새 대화 · ${name} · ${clip(message, 30)}`,
-        intro: `${name} 님이 챗봇 대화를 시작했어요.`,
+        subject: `[KIGLE 챗봇] 새 대화 · ${who} · ${clip(message, 30)}`,
+        intro: `${who} 님이 챗봇 대화를 시작했어요.`,
         rows: [
           ['시작 시각', `${kst.text} (한국 시간)`],
-          ['이름', name],
-          ['이메일', email],
           ['대화 ID', sessionId],
           ['접속 주소(IP)', info.ip],
           ['지역', place],

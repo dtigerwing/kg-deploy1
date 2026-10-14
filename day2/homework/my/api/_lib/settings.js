@@ -23,8 +23,8 @@ export const defaultSettings = {
   // AI(OpenAI) 답변 사용 — 끄면 자유 질문은 가장 비슷한 자주 묻는 질문으로 답하거나 제안 (크레딧 0)
   aiEnabled: false,
   botName: '코코비 도우미',
-  greeting: '안녕하세요! 저는 KIGLE 놀이터 안내를 맡은 코코비 도우미예요. 🦖\n대화를 시작하기 전에 이름과 이메일을 알려 주세요.',
-  notice: '입력 중인 문장과 대화 내용은 동의하신 범위에서 감정 분석·응대 품질 관리에 쓰여요. 연락처 같은 민감한 정보는 적지 말아 주세요.',
+  greeting: '안녕하세요! 저는 KIGLE 놀이터 안내를 맡은 코코비 도우미예요. 🦖\n궁금한 걸 적어 주시거나, 아래 주제를 눌러 자주 묻는 질문을 골라 보세요.',
+  notice: '입력 중인 문장과 대화 내용은 응대 품질 관리와 감정 분석에 쓰이고 {days}일 뒤 자동으로 지워져요. 연락처 같은 개인정보는 적지 말아 주세요.',
   style: STYLE,
   guidelines: GUIDELINES,
   limits: {
@@ -66,21 +66,14 @@ export const defaultSettings = {
       happy: { opener: '', guide: '즐거운 기분에 맞춰 밝고 경쾌한 말투로 답한다. 이모지는 하나까지.' },
     },
   },
-  // 대화 전 동의 — {days} = 보관 기간
+  // 채팅 내역 보관 기간 (지나면 자동 삭제)
   privacy: {
     retentionDays: 90,
-    consent: `[개인정보 수집·이용 동의 (필수)]
-· 수집 항목: 이름, 이메일, 대화 내용(입력 중인 문장 포함), 감정 분석 결과, 접속 정보(IP·기기·지역)
-· 이용 목적: 챗봇 상담 응대, 감정에 맞춘 응대, 문의 회신, 서비스 품질 관리
-· 보관 기간: 대화 시작일로부터 {days}일 뒤 자동 삭제
-· 외부 전송: 답변 생성(OpenAI)과 감정 분석(TypeSafe AI)을 위해 대화 내용이 해당 서비스로 전송돼요.
-· 동의하지 않을 수 있으며, 이 경우 챗봇을 이용할 수 없어요. 만 14세 미만 어린이는 보호자가 대신 입력해 주세요.`,
   },
   messages: {
     match: '이 질문에 대한 안내예요.',
     suggest: '이 중에 찾으시는 질문이 있나요? 눌러 보세요.',
     noMatch: '그 질문은 자주 묻는 질문에서 찾지 못했어요. 아래 주제에서 골라 주시거나, 자세한 내용은 KIGLE 공식 홈페이지(https://kigle.co.kr)를 확인해 주세요.',
-    welcome: '{name} 님, 반가워요! 😊 궁금한 걸 적어 주시거나 아래 주제를 눌러 자주 묻는 질문을 골라 보세요.',
     unknown: '그 부분은 아직 제가 안내할 수 있는 자료가 없어요. 😢 자세한 내용은 KIGLE 공식 홈페이지(https://kigle.co.kr)를 확인해 주세요.',
     offTopic: '저는 KIGLE과 코코비, 게임·영상·동요, 이 사이트 이용 방법만 안내할 수 있어요. 아래 주제 중에서 골라 보시겠어요?',
     injection: '그 요청은 도와드릴 수 없어요. KIGLE이나 코코비에 대해 궁금한 점을 물어봐 주세요.',
@@ -191,7 +184,7 @@ export function validateSettings(input) {
     const r = s.emotion.rules[k] || {};
     out.emotion.rules[k] = { opener: optional(r.opener, 200, '감정 첫 문장'), guide: optional(r.guide, 600, '감정 응대 기준') };
   }
-  out.privacy = { retentionDays: clampInt(s.privacy.retentionDays, 1, 3650), consent: text(s.privacy.consent, 2000, '동의 문구') };
+  out.privacy = { retentionDays: clampInt(s.privacy.retentionDays, 1, 3650) };
   return out;
 }
 
