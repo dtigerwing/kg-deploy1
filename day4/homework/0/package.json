@@ -1,0 +1,9 @@
+{
+  "name": "ttukttak-russo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "table": "node scripts/build-table.mjs animal"
+  }
+}

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>루소 목공소</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="bar">
+    <button class="logo" type="button" data-action="home">루소 목공소</button>
+    <span class="meta" id="meta"></span>
+  </header>
+
+  <main>
+    <!-- 루소의 작업실: 테이블을 사이에 두고 루소와 마주 앉은 장면 하나로 모든 단계를 진행한다 -->
+    <section class="scene" id="scene" data-state="start">
+      <div class="russo" id="russo" data-pose="basic"></div>
+      <div class="bursts" aria-hidden="true"><span>뚝딱!</span><span>뚝딱!</span><span>탁!</span></div>
+
+      <div class="bubble" id="bubble">
+        <small id="bubble-small"></small>
+        <strong id="bubble-main"></strong>
+      </div>
+
+      <!-- 완성품: 루소가 깎은 목각인형 -->
+      <figure class="work" id="work" hidden>
+        <div class="work-photo" id="work-photo"></div>
+        <figcaption class="plaque" id="plaque"></figcaption>
+      </figure>
+
+      <div class="table">
+        <div class="table-top" id="table"></div>
+      </div>
+    </section>
+
+    <div class="under">
+      <button class="link" type="button" data-action="undo" id="undo" hidden>↩ 이전으로</button>
+      <p class="status" id="status"></p>
+      <button class="link" type="button" data-action="home" id="home" hidden>처음으로</button>
+    </div>
+  </main>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ttukttak-russo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.mjs"],
+      "port": 3000
+    },
+    {
+      "name": "build-table-animal",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "mkdir -p .data && (node scripts/build-table.mjs animal > .data/build-table.log 2>&1; echo \"exit $?\" >> .data/build-table.log) & exec node -e \"require('http').createServer((q,s)=>s.end('build-table')).listen(3999)\""],
+      "port": 3999
+    }
+  ]
+}
