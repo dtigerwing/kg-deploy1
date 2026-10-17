@@ -1,0 +1,22 @@
+// Cloudflare Workers 배포 설정 (무료 요금제)
+// 배포: npm run deploy   /  Workers 방식으로 로컬 확인: npm run dev:worker
+// 키(OPENAI_API_KEY, TYPESAFE_API_KEY)는 여기 적지 않고 Secrets 로 넣는다: npx wrangler secret put OPENAI_API_KEY
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "russo-workshop",
+	"main": "worker/index.mjs",
+	"compatibility_date": "2026-10-01",
+	"compatibility_flags": ["nodejs_compat"],
+	// 화면(public/)과 루소·배우 그림만 dist/ 로 모아 정적 자산으로 올린다 (.env, .data, 원본 그림은 올라가지 않음)
+	"build": { "command": "node scripts/build-assets.mjs" },
+	"assets": { "directory": "./dist", "binding": "ASSETS" },
+	// 그림, 배우 배정, 하루 생성 수, 못 맞힌 기록 (worker/store-kv.mjs)
+	"kv_namespaces": [{ "binding": "KV", "id": "bb2a0f4d134a44818d3c0dd467cb80c8" }],
+	"vars": {
+		"IMAGE_MODEL": "gpt-image-2.5-sunburst",
+		"IMAGE_QUALITY": "low",
+		"TYPESAFE_MODEL": "jev-latest",
+		"DAILY_IMAGE_LIMIT": "50"
+	},
+	"observability": { "enabled": true }
+}

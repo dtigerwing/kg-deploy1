@@ -115,6 +115,8 @@ export default {
     { id: 'spider', name: '거미', en: 'spider', mimic: 'wearing a spider costume with eight legs, hanging from a web', draft: 'NNNNYNNNNY NNYNnNNNNn yNYNynyyNY NNYNNNNNYN nnNNnNyNNn' },
     { id: 'camel', name: '낙타', en: 'camel', mimic: 'wearing a camel costume with two humps, walking through a desert', draft: 'YNNNNNNYYN NnNYnNNNnN NyNYNnNNNN yYNNNNNNNN NNNNnNyNNN' },
     { id: 'bat', name: '박쥐', en: 'bat', mimic: 'wearing black bat wings, hanging upside down in a cave', draft: 'YNNNNYNNNy NNyNnNNNNN YNynnNNYYN YNNnNyNNNN NNNnnyyNNN' },
+    // 2026-10-17 못 맞힌 정답으로 추가 (임시 값 없이 Jev 줄만)
+    { id: 'trex', name: '티라노사우루스', en: 'Tyrannosaurus rex (dinosaur)', mimic: 'wearing a big green T-rex costume with tiny arms and a huge toothy jaw, stomping and roaring' },
     { id: 'mole', name: '두더지', en: 'mole', mimic: 'wearing a brown mole costume with tiny round sunglasses, popping out of a dirt hole', draft: 'YNNNNNNYNY NNyNyNNNNN yNyNNNNynN NNNNNNyNNN YNNNNNyNNN' },
   ],
 };

@@ -1,6 +1,6 @@
 // TypeSafe Jev (System One). 문서: https://docs.typesafe.ai/api
 // Jev 는 글을 만들지 않고 주어진 질문에 확률(Noul)이나 선택(Choice)만 돌려준다.
-import { env } from './env.mjs';
+import { cfg as env } from './config.mjs';
 import { ACTORS, allowedActors } from './actors.mjs';
 
 export const jevReady = () => Boolean(env('TYPESAFE_API_KEY'));

@@ -1,38 +1,29 @@
-// 루소 목공소 로컬 서버 (설치할 패키지 없음): npm run dev → http://localhost:3000
-// 게임 계산은 화면(public/game.js)에서 하고, 서버는 키가 필요한 일(이미지·Jev)과 저장만 맡는다.
+// 루소 목공소 로컬 서버: npm run dev → http://localhost:3000
+// 배포는 Cloudflare Workers (worker/index.mjs). /api 처리는 둘이 같은 코드(lib/api.mjs)를 쓰고, 저장소만 다르다.
+// 게임 계산은 화면(public/game.js)에서 하고, 서버는 키가 필요한 일(그림·Jev)과 저장만 맡는다.
+import './node/env.mjs'; // .env 를 설정값으로 연결
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, DATA_DIR } from './lib/paths.mjs';
-import { env } from './lib/env.mjs';
+import { ROOT } from './node/paths.mjs';
+import { env } from './node/env.mjs';
+import { readTables } from './node/tables.mjs';
+import { loadRefs } from './node/refs.mjs';
+import { fsStore } from './node/store-fs.mjs';
 import { TOPICS, loadTopic } from './lib/topics.mjs';
-import { reveal } from './lib/reveal.mjs';
+import { handleApi } from './lib/api.mjs';
 import { jevReady } from './lib/jev.mjs';
 import { imageReady } from './lib/image.mjs';
-import * as store from './lib/store.mjs';
 
 const STATIC = [
   ['/assets/', path.join(ROOT, 'assets')],
-  ['/images/', path.join(DATA_DIR, 'images')],
   ['/', path.join(ROOT, 'public')],
 ];
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json' };
 
-const send = (res, status, body) => {
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
-  res.end(JSON.stringify(body));
-};
+const deps = { store: fsStore, tables: readTables, refsFor: async (actorId) => loadRefs(actorId) };
 
-async function readBody(req) {
-  let raw = '';
-  for await (const chunk of req) {
-    raw += chunk;
-    if (raw.length > 64 * 1024) throw new Error('too large');
-  }
-  return raw ? JSON.parse(raw) : {};
-}
-
-function serveStatic(req, res, pathname) {
+function serveStatic(res, pathname) {
   for (const [prefix, dir] of STATIC) {
     if (!pathname.startsWith(prefix)) continue;
     let file = path.join(dir, decodeURIComponent(pathname.slice(prefix.length)));
@@ -43,61 +34,39 @@ function serveStatic(req, res, pathname) {
     fs.createReadStream(file).pipe(res);
     return;
   }
-  send(res, 404, { error: 'not found' });
+  res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+  res.end('not found');
 }
 
-async function api(req, res, pathname) {
-  if (req.method === 'GET' && pathname === '/api/status') {
-    const animal = loadTopic('animal');
-    return send(res, 200, {
-      topics: TOPICS.map((t) => ({ id: t.id, name: t.name, ready: Boolean(t.data) })),
-      table: animal.tableSource,
-      jev: jevReady(),
-      image: imageReady(),
-      imagesToday: store.imagesToday(),
-      imageLimit: Number(env('DAILY_IMAGE_LIMIT', '50')) || 0,
-    });
-  }
-
-  const topicMatch = pathname.match(/^\/api\/topic\/([a-z]+)$/);
-  if (req.method === 'GET' && topicMatch) {
-    const topic = loadTopic(topicMatch[1]);
-    return topic ? send(res, 200, topic) : send(res, 404, { error: '준비 중인 주제예요.' });
-  }
-
-  if (req.method === 'POST' && pathname === '/api/reveal') {
-    const { topic, candidate } = await readBody(req);
-    const result = await reveal(String(topic), String(candidate));
-    return result ? send(res, 200, result) : send(res, 404, { error: '없는 정답이에요.' });
-  }
-
-  // 졌어요: 정답과 답변 기록만 남긴다 (나중에 후보를 보강할 때 참고)
-  if (req.method === 'POST' && pathname === '/api/loss') {
-    const { topic, answer, answers } = await readBody(req);
-    const text = String(answer || '').trim().slice(0, 50);
-    if (text) store.appendLog('losses.jsonl', { topic: String(topic), answer: text, answers: Array.isArray(answers) ? answers.slice(0, 40) : [] });
-    return send(res, 200, { ok: true });
-  }
-
-  send(res, 404, { error: 'not found' });
+async function readRaw(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return Buffer.concat(chunks);
 }
 
-loadTopic('animal'); // 데이터가 잘못됐으면 켜질 때 바로 알 수 있게
+// 데이터가 잘못됐으면 켜질 때 바로 알 수 있게
+const tables = readTables();
+TOPICS.forEach((t) => loadTopic(t.id, tables[t.id]));
 
 const port = Number(env('PORT', '3000'));
 http
   .createServer(async (req, res) => {
-    const { pathname } = new URL(req.url, 'http://localhost');
+    const url = new URL(req.url, `http://localhost:${port}`);
     try {
-      if (pathname.startsWith('/api/')) await api(req, res, pathname);
-      else serveStatic(req, res, pathname);
+      const body = req.method === 'POST' ? await readRaw(req) : undefined;
+      const response = await handleApi(new Request(url, { method: req.method, headers: req.headers, body }), deps);
+      if (!response) return serveStatic(res, url.pathname);
+      res.writeHead(response.status, Object.fromEntries(response.headers));
+      res.end(Buffer.from(await response.arrayBuffer()));
     } catch (e) {
       console.error(e);
-      if (!res.headersSent) send(res, 500, { error: '서버에서 문제가 생겼어요.' });
+      if (!res.headersSent) res.writeHead(500, { 'content-type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: '서버에서 문제가 생겼어요.' }));
     }
   })
   .listen(port, () => {
+    const t = readTables();
     console.log(`루소 목공소: http://localhost:${port}`);
-    console.log(`  판단 표: ${loadTopic('animal').tableSource === 'jev' ? 'Jev' : '임시 값 (npm run table 로 Jev 표 만들기)'}`);
+    console.log(`  판단 표: ${TOPICS.map((x) => `${x.name} ${loadTopic(x.id, t[x.id])?.tableSource || '없음'}`).join(' · ')}`);
     console.log(`  이미지: ${imageReady() ? '켜짐' : '꺼짐 (.env 의 OPENAI_API_KEY 비어 있음)'} · Jev: ${jevReady() ? '켜짐' : '꺼짐'}`);
   });

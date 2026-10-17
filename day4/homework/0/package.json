@@ -1,9 +1,15 @@
 {
-  "name": "ttukttak-russo",
+  "name": "russo-workshop",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node server.mjs",
-    "table": "node scripts/build-table.mjs animal"
+    "table": "node scripts/build-table.mjs",
+    "losses": "node scripts/losses.mjs",
+    "dev:worker": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.151.1"
   }
 }
