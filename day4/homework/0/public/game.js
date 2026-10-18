@@ -17,6 +17,8 @@ export const RULES = {
   maxReguess: 1, // 틀린 뒤 다시 추측하는 횟수. 그래도 틀리면 창고 뒤지기(LLM + Jev, 기획서 4절)로 넘어간다
   reguessMin: 2, // 틀린 뒤 최소 이만큼 더 묻고
   reguessMax: 3, // 최대 이만큼 묻고 다시 추측
+  variedFirst: 3, // 처음 이만큼의 질문은
+  variedPool: 5, // 잘 가르는 질문 상위 이만큼 중에서 무작위로 고른다 (시작이 단조롭지 않게)
 };
 
 const WEIGHT = Object.fromEntries(ANSWERS.map((a) => [a.key, a.weight]));
@@ -63,6 +65,11 @@ function pickQuestion(game, post, left) {
     const pYes = yes.reduce((a, b) => a + b, 0);
     return { q, h: pYes * entropy(yes) + (1 - pYes) * entropy(no) };
   });
+  // 처음 몇 개는 잘 가르는 질문 상위 몇 개 중 무작위로: 늘 같은 질문(예: "포유류인가요?")으로 시작하지 않게
+  if (game.answers.length < RULES.variedFirst) {
+    const top = [...scored].sort((x, y) => x.h - y.h).slice(0, RULES.variedPool);
+    return top[Math.floor(Math.random() * top.length)].q;
+  }
   const best = Math.min(...scored.map((s) => s.h));
   const good = scored.filter((s) => s.h <= best + 0.05);
   return good[Math.floor(Math.random() * good.length)].q;

@@ -18,9 +18,8 @@ export const topicData = (topicId) => TOPICS.find((t) => t.id === topicId)?.data
 function draftRow(c, count) {
   if (!c.draft) return null;
   const codes = c.draft.replace(/\s/g, '');
-  if (codes.length !== count || [...codes].some((ch) => !(ch in DRAFT))) {
-    throw new Error(`${c.id} 의 draft 가 질문 수(${count})와 맞지 않아요: ${codes.length}글자`);
-  }
+  // 질문을 늘리면 임시 값 길이가 안 맞는다: 그때는 쓰지 않고 Jev 판단 표를 기다린다
+  if (codes.length !== count || [...codes].some((ch) => !(ch in DRAFT))) return null;
   return [...codes].map((ch) => DRAFT[ch]);
 }
 

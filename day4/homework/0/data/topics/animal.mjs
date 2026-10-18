@@ -64,6 +64,12 @@ export default {
     '몸이 길쭉한가요?',
     '바다에 사나요?',
     '재주를 부리거나 사람 말을 흉내 내나요?',
+    // 51~55 (2026-10-18 추가: 초반 질문이 단조롭지 않게, 후보를 고르게 가르는 질문)
+    '귀여운 동물로 인기가 많나요?',
+    '다리가 없거나 거의 안 보이나요?',
+    '고양이보다 몸집이 작나요?',
+    '집·농장·도시처럼 사람 사는 곳 가까이에서 흔히 볼 수 있나요?',
+    '몸 색이 갈색 계열인가요?',
   ],
   candidates: [
     { id: 'dog', name: '강아지', en: 'dog', mimic: 'wearing a floppy-eared puppy hoodie, wagging a tail and holding a bone', draft: 'YNNNNNNYnN YnnNYNNNyn ?N?NnyNNNN nnNYN?nNNN nnyNYyYnNY' },

@@ -64,6 +64,15 @@
         "mkdir -p .data && (node scripts/actor-test.mjs > .data/actor-test.log 2>&1; echo \"exit $?\" >> .data/actor-test.log) & exec node -e \"require('http').createServer((q,s)=>s.end('actor-test')).listen(3999)\""
       ],
       "port": 3999
+    },
+    {
+      "name": "build-table-all",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "mkdir -p .data && (for t in animal food person; do node scripts/build-table.mjs $t --all; done > .data/build-table.log 2>&1; echo \"exit $?\" >> .data/build-table.log) & exec node -e \"require('http').createServer((q,s)=>s.end('build-table')).listen(3999)\""
+      ],
+      "port": 3999
     }
   ]
 }
