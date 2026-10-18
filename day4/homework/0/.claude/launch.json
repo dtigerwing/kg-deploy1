@@ -55,6 +55,15 @@
         "mkdir -p .data && (node scripts/build-table.mjs person --all > .data/build-table.log 2>&1; echo \"exit $?\" >> .data/build-table.log) & exec node -e \"require('http').createServer((q,s)=>s.end('build-table')).listen(3999)\""
       ],
       "port": 3999
+    },
+    {
+      "name": "actor-test",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "mkdir -p .data && (node scripts/actor-test.mjs > .data/actor-test.log 2>&1; echo \"exit $?\" >> .data/actor-test.log) & exec node -e \"require('http').createServer((q,s)=>s.end('actor-test')).listen(3999)\""
+      ],
+      "port": 3999
     }
   ]
 }

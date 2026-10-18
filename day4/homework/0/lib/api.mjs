@@ -104,7 +104,8 @@ export async function handleApi(request, deps) {
 
   const imageMatch = pathname.match(/^\/images\/([a-z]+)\/([a-z0-9_]+)$/);
   if (method === 'GET' && imageMatch) {
-    const img = await deps.store.getImage(imageMatch[1], imageMatch[2]);
+    const n = Math.max(0, Math.min(9, Number(new URL(request.url).searchParams.get('n')) || 0)); // 정답의 몇 번째 그림
+    const img = await deps.store.getImage(imageMatch[1], imageMatch[2], n);
     if (!img) return json(404, { error: 'not found' });
     // 주소에 ?v=버전 이 붙어 있어서 오래 저장해도 된다 (다시 그리면 버전이 바뀜)
     return new Response(img.body, { headers: { 'content-type': img.type, 'cache-control': 'public, max-age=31536000, immutable' } });

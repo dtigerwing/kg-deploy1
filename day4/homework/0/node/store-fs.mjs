@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { DATA_DIR } from './paths.mjs';
+import { normalizeVariants, countActors } from '../lib/variants.mjs';
 
 const file = (name) => path.join(DATA_DIR, name);
 const kstToday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); // 하루 상한은 한국 시간 기준
@@ -19,10 +20,11 @@ function writeJSON(name, value) {
   fs.writeFileSync(file(name), JSON.stringify(value, null, 2));
 }
 
-// 그림 파일: 지금은 .jpeg, 예전 그림은 .webp / .png
-function findImageFile(topicId, candidateId) {
+// 그림 파일: 0번째는 <후보>.jpeg, 그다음은 <후보>~1.jpeg … (예전 그림은 .webp / .png)
+const imageName = (candidateId, n) => (n ? `${candidateId}~${n}` : candidateId);
+function findImageFile(topicId, candidateId, n = 0) {
   for (const ext of ['jpeg', 'webp', 'png']) {
-    const f = file(path.join('images', topicId, `${candidateId}.${ext}`));
+    const f = file(path.join('images', topicId, `${imageName(candidateId, n)}.${ext}`));
     if (fs.existsSync(f)) return { f, type: `image/${ext}` };
   }
   return null;
@@ -31,27 +33,35 @@ function findImageFile(topicId, candidateId) {
 const locks = new Set();
 
 export const fsStore = {
-  async getActor(key) {
-    return readJSON('assignments.json', {})[key] || null;
+  // 정답의 그림 목록 [{ actor, type, v }] (lib/variants.mjs). 그림 파일이 지워졌으면 목록에서 뺀다
+  async getVariants(topicId, candidateId) {
+    const record = readJSON('assignments.json', {})[`${topicId}/${candidateId}`];
+    let variants = normalizeVariants(record);
+    // 아주 예전 로컬 기록은 { id, by } 만 있고 그림 정보가 없다: 그림 파일이 있으면 0번째 그림으로 친다
+    const old = !variants.length && record?.id && findImageFile(topicId, candidateId, 0);
+    if (old) variants = [{ actor: { id: record.id, by: record.by }, type: old.type, v: Math.round(fs.statSync(old.f).mtimeMs).toString(36) }];
+    return variants.filter((_, n) => findImageFile(topicId, candidateId, n));
   },
-  async setActor(key, record) {
-    writeJSON('assignments.json', { ...readJSON('assignments.json', {}), [key]: record });
-  },
-  async imageVersion(topicId, candidateId) {
-    const found = findImageFile(topicId, candidateId);
-    return found ? Math.round(fs.statSync(found.f).mtimeMs).toString(36) : null;
-  },
-  async getImage(topicId, candidateId) {
-    const found = findImageFile(topicId, candidateId);
+  async getImage(topicId, candidateId, n = 0) {
+    const found = findImageFile(topicId, candidateId, n);
     return found ? { body: fs.readFileSync(found.f), type: found.type } : null;
   },
-  async saveImage(topicId, candidateId, { bytes, type }) {
-    const old = findImageFile(topicId, candidateId);
+  async saveVariant(topicId, candidateId, n, { bytes, type }, actor) {
+    const old = findImageFile(topicId, candidateId, n);
     if (old) fs.rmSync(old.f);
-    const f = file(path.join('images', topicId, `${candidateId}.${type.split('/')[1]}`));
+    const f = file(path.join('images', topicId, `${imageName(candidateId, n)}.${type.split('/')[1]}`));
     fs.mkdirSync(path.dirname(f), { recursive: true });
     fs.writeFileSync(f, bytes);
-    return Math.round(fs.statSync(f).mtimeMs).toString(36);
+    const v = Math.round(fs.statSync(f).mtimeMs).toString(36);
+    const all = readJSON('assignments.json', {});
+    const key = `${topicId}/${candidateId}`;
+    const variants = normalizeVariants(all[key]);
+    variants[n] = { actor, type, v };
+    writeJSON('assignments.json', { ...all, [key]: { variants } });
+    return v;
+  },
+  async getActorCounts() {
+    return countActors(Object.values(readJSON('assignments.json', {})));
   },
   async lock(key) {
     if (locks.has(key)) return false;

@@ -419,7 +419,7 @@ function reveal(candidate, count, result, img) {
     ]),
   );
   // 작품 명패 아래: 공유하기
-  $('work-actions').replaceChildren(button('📤 공유하기', () => showShareLink(candidate, count), 'small'));
+  $('work-actions').replaceChildren(button('📤 공유하기', () => showShareLink(candidate, count, result?.n || 0), 'small'));
 }
 
 // 나무에서 깎여 나오는 공개: 나무색으로 흐릿하게 시작해서 톱밥이 흩날리며 선명한 색으로 바뀐다
@@ -443,8 +443,9 @@ function carveReveal(img) {
 
 // 공유: 버튼 자리에 공유 링크를 보여준다 (누르면 전체 선택돼서 바로 복사할 수 있음).
 // 링크는 공유용 결과 페이지(/share/...)라서 받은 사람이 열면 그림과 [나도 해보기]가 나온다.
-function showShareLink(candidate, count) {
-  const input = el('input', { class: 'share-url', value: `${location.origin}/share/${topic.id}/${candidate.id}?q=${count}`, readonly: '', 'aria-label': '공유 링크' });
+function showShareLink(candidate, count, n = 0) {
+  const url = `${location.origin}/share/${topic.id}/${candidate.id}?q=${count}${n ? `&n=${n}` : ''}`; // n: 정답의 몇 번째 그림
+  const input = el('input', { class: 'share-url', value: url, readonly: '', 'aria-label': '공유 링크' });
   input.addEventListener('focus', () => input.select());
   $('work-actions').replaceChildren(el('div', { class: 'share-box' }, [el('p', { text: '링크를 공유해주세요' }), input]));
   input.focus();

@@ -18,10 +18,13 @@ export async function sharePage(request, topicId, candidateId, store) {
   if (!candidate) return html(404, page({ origin: url.origin, title: '루소 목공소', heading: '찾을 수 없는 작품이에요', body: '' }));
 
   const key = `${topicId}/${candidateId}`;
-  const v = await store.imageVersion(topicId, candidateId);
-  const actor = ACTORS[(await store.getActor(key))?.id];
+  // 정답의 몇 번째 그림인지 (n). 정답당 그림이 최대 2장이라 공유한 사람이 본 그림을 보여준다
+  const variants = await store.getVariants(topicId, candidateId);
+  const n = Math.min(Math.max(0, Number(url.searchParams.get('n')) || 0), Math.max(0, variants.length - 1));
+  const shown = variants[n];
+  const actor = shown ? ACTORS[shown.actor.id] : null;
   const count = Number(url.searchParams.get('q')) || 0;
-  const image = v ? `${url.origin}/images/${topicId}/${candidateId}?v=${v}` : null;
+  const image = shown ? `${url.origin}/images/${topicId}/${candidateId}?v=${shown.v}${n ? `&n=${n}` : ''}` : null;
 
   const title = `루소 목공소 · ${candidate.name} 목각인형`;
   const desc = `${count ? `목수 루소가 스무고개 ${count}번 만에 맞히고` : '목수 루소가 스무고개로 맞히고'} 뚝딱 만든 ${candidate.name} 목각인형이에요. 나도 해보기!`;

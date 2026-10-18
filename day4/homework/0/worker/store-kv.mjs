@@ -1,7 +1,8 @@
 // 배포 저장소: Workers KV 하나에 모두 넣는다 (그림, 배우 배정, 하루 생성 수, 못 맞힌 기록).
 // 로컬용 node/store-fs.mjs 와 같은 일을 한다. 키 이름:
-//   actor:<주제>/<후보>   배우 배정 { id, by, image: { type, v } }
-//   img:<주제>/<후보>     목각인형 그림 (metadata.type)
+//   actor:<주제>/<후보>   그림 목록 { variants: [{ actor: { id, by }, type, v }] } (예전 형식도 읽음, lib/variants.mjs)
+//   img:<주제>/<후보>     0번째 목각인형 그림 (metadata.type). 그다음은 img:<주제>/<후보>~1 …
+//   stats:actors          배우별로 맡은 그림 수 (배우를 골고루 고르기 위해)
 //   usage:<YYYY-MM-DD>    그날(한국 시간) 그림 생성 수
 //   lock:<주제>/<후보>    지금 그리는 중 표시 (3분 뒤 자동 삭제)
 //   loss:<시각>:<임의값>  못 맞힌 기록
@@ -11,7 +12,10 @@
 //   stats:wins            맞힌 횟수 { '주제/후보': 횟수 } (키 하나에 모아서 읽기 1번으로 TOP 5 를 만든다.
 //                         동시에 맞히면 가끔 1번이 빠질 수 있지만 순위 표시용이라 괜찮다)
 // KV 무료 한도: 쓰기 하루 1,000번. 새 그림 1장에 쓰기 약 6번(상한 50장이면 약 300번), 맞힐 때마다 1번.
+import { normalizeVariants, countActors } from '../lib/variants.mjs';
+
 const kstToday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const imgKey = (key, n) => `img:${key}${n ? `~${n}` : ''}`;
 
 export function kvStore(kv) {
   const getActor = (key) => kv.get(`actor:${key}`, 'json');
@@ -26,25 +30,36 @@ export function kvStore(kv) {
     } while (cursor);
     return names;
   };
+  const getActorCounts = async () => {
+    const saved = await kv.get('stats:actors', 'json');
+    if (saved) return saved;
+    // 처음 한 번은 저장된 그림 목록에서 센다
+    const names = await listKeys('actor:');
+    const counts = countActors(await Promise.all(names.map((n) => kv.get(n, 'json'))));
+    await kv.put('stats:actors', JSON.stringify(counts));
+    return counts;
+  };
   return {
-    getActor,
-    async setActor(key, record) {
-      await kv.put(`actor:${key}`, JSON.stringify(record));
+    async getVariants(topicId, candidateId) {
+      return normalizeVariants(await getActor(`${topicId}/${candidateId}`));
     },
-    async imageVersion(topicId, candidateId) {
-      return (await getActor(`${topicId}/${candidateId}`))?.image?.v || null;
-    },
-    async getImage(topicId, candidateId) {
-      const { value, metadata } = await kv.getWithMetadata(`img:${topicId}/${candidateId}`, 'stream');
+    async getImage(topicId, candidateId, n = 0) {
+      const { value, metadata } = await kv.getWithMetadata(imgKey(`${topicId}/${candidateId}`, n), 'stream');
       return value ? { body: value, type: metadata?.type || 'image/webp' } : null;
     },
-    async saveImage(topicId, candidateId, { bytes, type }) {
+    async saveVariant(topicId, candidateId, n, { bytes, type }, actor) {
       const key = `${topicId}/${candidateId}`;
       const v = Date.now().toString(36);
-      await kv.put(`img:${key}`, bytes, { metadata: { type } });
-      await kv.put(`actor:${key}`, JSON.stringify({ ...((await getActor(key)) || {}), image: { type, v } }));
+      await kv.put(imgKey(key, n), bytes, { metadata: { type } });
+      const variants = normalizeVariants(await getActor(key));
+      variants[n] = { actor, type, v };
+      await kv.put(`actor:${key}`, JSON.stringify({ variants }));
+      const counts = await getActorCounts();
+      counts[actor.id] = (counts[actor.id] || 0) + 1;
+      await kv.put('stats:actors', JSON.stringify(counts));
       return v;
     },
+    getActorCounts,
     async lock(key) {
       if (await kv.get(`lock:${key}`)) return false;
       await kv.put(`lock:${key}`, '1', { expirationTtl: 180 });
