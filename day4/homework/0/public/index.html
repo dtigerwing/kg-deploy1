@@ -19,7 +19,15 @@
     <!-- 루소의 작업실: 테이블을 사이에 두고 루소와 마주 앉은 장면 하나로 모든 단계를 진행한다 -->
     <section class="scene" id="scene" data-state="start">
       <div class="russo" id="russo" data-pose="basic"></div>
+      <!-- 창고 뒤지기 때만 보임 -->
+      <div class="roamer" aria-hidden="true"><img src="/assets/russo/search.png" alt=""></div>
+      <div class="rummage" aria-hidden="true"><span>부스럭</span><span>이건가?</span><span>어디 있지~</span></div>
       <div class="bursts" aria-hidden="true"><span>뚝딱!</span><span>뚝딱!</span><span>탁!</span></div>
+
+      <aside class="top5" id="top5">
+        <h2>많이 만든 작품 TOP 5</h2>
+        <ol id="top5-list"></ol>
+      </aside>
 
       <div class="bubble" id="bubble">
         <small id="bubble-small"></small>
@@ -30,6 +38,7 @@
       <figure class="work" id="work" hidden>
         <div class="work-photo" id="work-photo"></div>
         <figcaption class="plaque" id="plaque"></figcaption>
+        <div class="work-actions" id="work-actions"></div>
       </figure>
 
       <div class="table">

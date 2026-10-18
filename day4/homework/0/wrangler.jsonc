@@ -16,7 +16,11 @@
 		"IMAGE_MODEL": "gpt-image-2.5-sunburst",
 		"IMAGE_QUALITY": "low",
 		"TYPESAFE_MODEL": "jev-latest",
-		"DAILY_IMAGE_LIMIT": "50"
+		"DAILY_IMAGE_LIMIT": "50",
+		// 창고 뒤지기 (목록 밖 후보를 떠올리는 OpenAI 글 모델)
+		"TEXT_MODEL": "gpt-5.6-terra",
+		"TEXT_REASONING": "none",
+		"DAILY_SEARCH_LIMIT": "300"
 	},
 	"observability": { "enabled": true }
 }

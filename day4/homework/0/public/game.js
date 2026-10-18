@@ -13,8 +13,8 @@ export const ANSWERS = [
 export const RULES = {
   maxQuestions: 20, // 이만큼 물으면 확신이 낮아도 추측
   minQuestions: 5, // 너무 빨리 추측하지 않게
-  guessAt: 0.8, // 1위 후보 확신도가 이 값을 넘으면 추측
-  maxReguess: 3, // 틀린 뒤 다시 추측하는 횟수
+  guessAt: 0.6, // 1위 후보 확신도가 이 값을 넘으면 추측 (0.8 → 0.6: 모의 게임에서 정답률은 같고 질문이 약 3개 줄어서)
+  maxReguess: 1, // 틀린 뒤 다시 추측하는 횟수. 그래도 틀리면 창고 뒤지기(LLM + Jev, 기획서 4절)로 넘어간다
   reguessMin: 2, // 틀린 뒤 최소 이만큼 더 묻고
   reguessMax: 3, // 최대 이만큼 묻고 다시 추측
 };

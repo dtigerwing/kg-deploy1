@@ -50,8 +50,9 @@ const provider = () => PROVIDERS[env('IMAGE_PROVIDER', 'openai')] || PROVIDERS.o
 
 export const imageReady = () => provider().ready();
 
-// 정답 그림은 webp 로 받는다: PNG(약 1MB)보다 훨씬 작아서 화면이 빨리 뜨고,
-// 무료 Workers 의 요청당 CPU 10ms 안에서 처리할 수 있다.
+// 정답 그림은 압축한 JPG 로 받는다: PNG(약 1MB)보다 훨씬 작아서(약 100KB) 화면이 빨리 뜨고,
+// 무료 Workers 의 요청당 CPU 10ms 안에서 처리할 수 있다. webp 보다 JPG 를 고른 이유는
+// 공유 링크 미리보기(카카오톡 등)가 webp 를 못 보여줄 수 있어서. (예전에 webp·png 로 저장된 그림은 그대로 쓴다)
 export async function generateImage(actorId, candidate, refs) {
-  return provider().generate(buildPrompt(actorId, candidate, refs.length > 0), refs, { output_format: 'webp', output_compression: 80 });
+  return provider().generate(buildPrompt(actorId, candidate, refs.length > 0), refs, { output_format: 'jpeg', output_compression: 80 });
 }

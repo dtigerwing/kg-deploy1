@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>루소 목공소 관리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #fff6e6; --paper: #fffdf8; --ink: #3b2a1a; --muted: #8a7258; --wood: #c0824a; --wood-dark: #8d5527; --line: #ead7bb; --blue: #2f6fd6; --blue-dark: #2457ab; --red: #c4462f; --green: #4f8a2a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'Gowun Dodum', system-ui, sans-serif; font-size: 16px; }
+    [hidden] { display: none !important; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: var(--wood); color: #fff; border-bottom: 5px solid var(--wood-dark); }
+    header h1 { margin: 0; font-family: 'Jua', sans-serif; font-weight: normal; font-size: 22px; }
+    header nav { display: flex; gap: 14px; align-items: center; }
+    header a, header button { color: #fff; font: inherit; font-size: 15px; background: none; border: 0; cursor: pointer; text-decoration: underline; }
+    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 18px; }
+    .card { background: var(--paper); border: 2px solid var(--line); border-radius: 16px; padding: 18px 20px; }
+    .card h2 { margin: 0 0 12px; font-family: 'Jua', sans-serif; font-weight: normal; font-size: 20px; color: var(--wood-dark); }
+    .card p.note { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .tile { background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 12px; }
+    .tile b { display: block; font-family: 'Jua', sans-serif; font-weight: normal; font-size: 26px; }
+    .tile span { color: var(--muted); font-size: 13px; }
+    .switch-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+    .switch-row:last-child { border-bottom: 0; }
+    .switch-row small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .toggle { position: relative; width: 50px; height: 28px; flex: none; }
+    .toggle input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+    .toggle span { position: absolute; inset: 0; background: #d5c7b3; border-radius: 999px; transition: background 0.2s; }
+    .toggle span::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .toggle input:checked + span { background: var(--green); }
+    .toggle input:checked + span::after { transform: translateX(22px); }
+    .toggle input:focus-visible + span { outline: 3px solid var(--blue); outline-offset: 2px; }
+    .limits { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+    label.field { display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+    input[type='number'], input[type='password'] { width: 180px; padding: 9px 12px; border: 2px solid var(--line); border-radius: 10px; font: inherit; background: #fff; }
+    .btn { padding: 9px 18px; border: 2px solid var(--wood-dark); border-radius: 10px; background: var(--paper); font-family: 'Jua', sans-serif; font-size: 16px; cursor: pointer; }
+    .btn.primary { background: var(--blue); border-color: var(--blue-dark); color: #fff; }
+    .btn.danger { border-color: var(--red); color: var(--red); background: #fff; }
+    .resets { display: flex; flex-direction: column; gap: 10px; }
+    .reset-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .reset-row small { color: var(--muted); font-size: 13px; display: block; }
+    .login { max-width: 360px; margin: 60px auto; text-align: center; }
+    .login form { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .error { color: var(--red); font-size: 14px; min-height: 1.2em; margin: 0; }
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .toast.show { opacity: 0.92; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>루소 목공소 관리</h1>
+    <nav><a href="/">게임으로</a><button type="button" id="logout" hidden>로그아웃</button></nav>
+  </header>
+
+  <main>
+    <section class="card login" id="login-card" hidden>
+      <h2>관리자 로그인</h2>
+      <form id="login-form">
+        <input type="password" id="password" placeholder="비밀번호" autocomplete="current-password" required>
+        <button class="btn primary" type="submit">들어가기</button>
+        <p class="error" id="login-error"></p>
+      </form>
+    </section>
+
+    <div id="panel" hidden>
+      <section class="card">
+        <h2>오늘 현황</h2>
+        <div class="tiles" id="tiles"></div>
+      </section>
+
+      <section class="card">
+        <h2>스위치</h2>
+        <p class="note">바꾸면 바로 저장되고, 다시 배포하지 않아도 게임에 반영돼요.</p>
+        <div id="switches"></div>
+      </section>
+
+      <section class="card">
+        <h2>하루 상한</h2>
+        <p class="note">비워 두면 배포 설정값을 써요. 상한에 닿으면 그날은 새 그림을 그리지 않거나 창고 뒤지기를 건너뛰어요.</p>
+        <form class="limits" id="limits">
+          <label class="field">목각인형 그림 (장)<input type="number" min="0" max="10000" id="limit-image"></label>
+          <label class="field">창고 뒤지기 (번)<input type="number" min="0" max="10000" id="limit-search"></label>
+          <button class="btn primary" type="submit">상한 저장</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>초기화</h2>
+        <p class="note">되돌릴 수 없어요. 누르면 한 번 더 확인해요.</p>
+        <div class="resets">
+          <div class="reset-row"><div>TOP 5 초기화<small>모든 정답의 맞힌 횟수를 지워요. 시작 화면 순위가 비어요.</small></div><button class="btn danger" type="button" data-reset="wins">초기화</button></div>
+          <div class="reset-row"><div>못 맞힌 기록 비우기<small>"못 맞힘" 화면에서 입력받은 정답 기록을 모두 지워요.</small></div><button class="btn danger" type="button" data-reset="losses">비우기</button></div>
+          <div class="reset-row"><div>오늘 사용량 되돌리기<small>오늘 그림 생성 수와 창고 뒤지기 수를 0으로 돌려 상한을 풀어요.</small></div><button class="btn danger" type="button" data-reset="usage">되돌리기</button></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/admin.js"></script>
+</body>
+</html>

@@ -13,7 +13,7 @@ let images = 0;
 for (const [key, pick] of Object.entries(assignments)) {
   const [topicId, candidateId] = key.split('/');
   const record = { id: pick.id, by: pick.by };
-  for (const ext of ['webp', 'png']) {
+  for (const ext of ['jpeg', 'webp', 'png']) {
     const f = path.join(DATA_DIR, 'images', topicId, `${candidateId}.${ext}`);
     if (!fs.existsSync(f)) continue;
     const type = `image/${ext}`;

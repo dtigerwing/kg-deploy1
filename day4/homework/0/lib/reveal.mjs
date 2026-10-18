@@ -1,18 +1,20 @@
 // 정답 공개: 처음 나온 정답이면 배우 고르기(Jev) → 그림 생성 → 저장. 다음부터는 저장된 것을 쓴다.
 // store(저장소)와 refsFor(참고 이미지)는 로컬(node/)과 배포(worker/)가 각자 넘긴다. 저장소가 할 일은 아래 make 참고.
-import { cfg } from './config.mjs';
+import { imageLimit } from './settings.mjs';
 import { ACTORS } from './actors.mjs';
 import { chooseActor } from './jev.mjs';
 import { generateImage, imageReady } from './image.mjs';
+import { describeCandidate } from './llm.mjs';
 import { topicData } from './topics.mjs';
 
 const pending = new Map(); // 같은 서버 안에서 같은 정답을 동시에 두 번 만들지 않게
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const imageUrl = (topicId, candidateId, v) => `/images/${topicId}/${candidateId}?v=${v}`;
 
-export async function reveal(topicId, candidateId, deps) {
+// found: 창고 뒤지기에서 찾은 목록 밖 후보 (서명 확인을 거친 것만 들어옴)
+export async function reveal(topicId, candidateId, deps, found = null) {
   const data = topicData(topicId);
-  const candidate = data?.candidates.find((c) => c.id === candidateId);
+  const candidate = data?.candidates.find((c) => c.id === candidateId) || (found?.id === candidateId ? found : null);
   if (!candidate) return null;
 
   const key = `${topicId}/${candidateId}`;
@@ -22,7 +24,7 @@ export async function reveal(topicId, candidateId, deps) {
   return job;
 }
 
-async function make(data, candidate, key, { store, refsFor }) {
+async function make(data, candidate, key, { store, refsFor, settings }) {
   let pick = await store.getActor(key);
   if (!pick || !ACTORS[pick.id]) {
     pick = await chooseActor(data.name, candidate);
@@ -34,6 +36,7 @@ async function make(data, candidate, key, { store, refsFor }) {
   const saved = await store.imageVersion(data.id, candidate.id);
   if (saved) return result(imageUrl(data.id, candidate.id, saved));
   if (!imageReady()) return result(null, 'no-key');
+  if (!settings.imageGen) return result(null, 'off'); // 관리 페이지에서 그림 생성을 끔
 
   // 다른 서버가 같은 정답을 그리는 중이면 끝날 때까지 기다렸다가 그 그림을 쓴다 (최대 약 75초)
   if (!(await store.lock(key))) {
@@ -46,8 +49,13 @@ async function make(data, candidate, key, { store, refsFor }) {
   }
 
   try {
-    if (!(await store.takeImageQuota(Number(cfg('DAILY_IMAGE_LIMIT', '50')) || 0))) return result(null, 'limit');
+    if (!(await store.takeImageQuota(imageLimit(settings)))) return result(null, 'limit');
     const started = Date.now();
+    // 창고에서 찾은 정답은 그림 설명이 아직 없다: 이때 한 번 쓰고 저장해 둔다
+    if (!candidate.mimic) {
+      Object.assign(candidate, await describeCandidate({ topicName: data.name, name: candidate.name, english: candidate.en }));
+      await store.setFound(key, candidate);
+    }
     const v = await store.saveImage(data.id, candidate.id, await generateImage(actor.id, candidate, await refsFor(actor.id)));
     console.log(`[image] ${key} (${actor.name}) ${Math.round((Date.now() - started) / 1000)}초`);
     return result(imageUrl(data.id, candidate.id, v));

@@ -24,6 +24,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 const deps = { store: fsStore, tables: readTables, refsFor: async (actorId) => loadRefs(actorId) };
 
 function serveStatic(res, pathname) {
+  if (pathname === '/admin') pathname = '/admin.html'; // 관리 페이지 (배포에서는 Workers 정적 자산이 같은 일을 함)
   for (const [prefix, dir] of STATIC) {
     if (!pathname.startsWith(prefix)) continue;
     let file = path.join(dir, decodeURIComponent(pathname.slice(prefix.length)));
