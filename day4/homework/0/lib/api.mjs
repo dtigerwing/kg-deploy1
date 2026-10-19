@@ -5,7 +5,7 @@ import { reveal } from './reveal.mjs';
 import { jevReady } from './jev.mjs';
 import { imageReady } from './image.mjs';
 import { sharePage } from './share.mjs';
-import { storageSearch, storageProbe } from './search.mjs';
+import { storageSearch, storageAsk, storageProbe } from './search.mjs';
 import { verifyPayload } from './sign.mjs';
 import { loadSettings, imageLimit } from './settings.mjs';
 import { handleAdmin } from './admin.mjs';
@@ -36,7 +36,7 @@ export async function handleApi(request, deps) {
   if (pathname.startsWith('/api/admin/')) return handleAdmin(request, deps);
 
   // 관리 페이지 설정이 필요한 요청만 저장소에서 읽는다 (그림 요청마다 읽지 않게)
-  if (['/api/status', '/api/reveal', '/api/search'].includes(pathname) || pathname.startsWith('/api/topic/')) {
+  if (['/api/status', '/api/reveal', '/api/search', '/api/ask'].includes(pathname) || pathname.startsWith('/api/topic/')) {
     deps = { ...deps, settings: await loadSettings(deps.store) };
   }
 
@@ -82,10 +82,16 @@ export async function handleApi(request, deps) {
   }
 
   // 창고 뒤지기: 판단 표로 못 맞혔을 때 LLM + Jev 로 목록 밖 정답까지 찾기 (lib/search.mjs)
+  const list = (v) => (Array.isArray(v) ? v.slice(0, 40) : []);
   if (method === 'POST' && pathname === '/api/search') {
-    const { topic, answers, excluded, wrong } = await readJson(request);
-    const list = (v) => (Array.isArray(v) ? v.slice(0, 40) : []);
-    return json(200, await storageSearch({ topicId: String(topic), answers: list(answers), excluded: list(excluded).map(String), wrong: list(wrong).map(String) }, deps));
+    const { topic, answers, excluded, wrong, extra } = await readJson(request);
+    return json(200, await storageSearch({ topicId: String(topic), answers: list(answers), excluded: list(excluded).map(String), wrong: list(wrong).map(String), extra: list(extra) }, deps));
+  }
+
+  // 창고 가기 전 루소의 질문: LLM 이 지금까지의 답을 보고 새 질문을 하나 만든다
+  if (method === 'POST' && pathname === '/api/ask') {
+    const { topic, answers, wrong, extra } = await readJson(request);
+    return json(200, await storageAsk({ topicId: String(topic), answers: list(answers), wrong: list(wrong).map(String), extra: list(extra) }, deps));
   }
 
   // 줄자로 재기: 가르는 질문의 답으로 창고 후보 순서를 다시 매기기

@@ -1,6 +1,6 @@
 // Cloudflare Workers 배포 설정 (무료 요금제)
 // 배포: npm run deploy   /  Workers 방식으로 로컬 확인: npm run dev:worker
-// 키(OPENAI_API_KEY, TYPESAFE_API_KEY)는 여기 적지 않고 Secrets 로 넣는다: npx wrangler secret put OPENAI_API_KEY
+// 키(OPENAI_API_KEY, TYPESAFE_API_KEY, ANTHROPIC_API_KEY)는 여기 적지 않고 Secrets 로 넣는다: npx wrangler secret put OPENAI_API_KEY
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "russo-workshop",
@@ -17,9 +17,9 @@
 		"IMAGE_QUALITY": "low",
 		"TYPESAFE_MODEL": "jev-latest",
 		"DAILY_IMAGE_LIMIT": "50",
-		// 창고 뒤지기 (목록 밖 후보를 떠올리는 OpenAI 글 모델)
-		"TEXT_MODEL": "gpt-5.6-terra",
-		"TEXT_REASONING": "none",
+		// 창고 뒤지기 (목록 밖 후보를 떠올리는 Claude 글 모델, 키는 Secrets 의 ANTHROPIC_API_KEY)
+		"CLAUDE_MODEL": "claude-sonnet-5-5",
+		"CLAUDE_EFFORT": "low",
 		"DAILY_SEARCH_LIMIT": "300"
 	},
 	"observability": { "enabled": true }

@@ -5,11 +5,12 @@
 // LLM 이 떠올린 순서를 기본으로 하고, Jev 는 답과 크게 어긋나는 후보를 뒤로 미는 역할을 한다.
 import { searchLimit } from './settings.mjs';
 import { askJev, jevReady, tableQuestion } from './jev.mjs';
-import { suggestCandidates, llmReady } from './llm.mjs';
+import { suggestCandidates, askQuestion, llmReady } from './llm.mjs';
 import { signPayload, verifyPayload } from './sign.mjs';
 import { loadTopic, topicData } from './topics.mjs';
 import { ANSWERS, newGame, answer, posterior } from '../public/game.js';
 
+const ASK_COUNT = 2; // 창고 가기 전 루소의 질문 수 (답을 보고 하나씩 만든다)
 const PROBE_GAP = 4; // 1위와 2위 점수 차이가 이보다 작으면 줄자로 재기 (가르는 질문 1~3개 더). LLM 순서 가산점만으로도 1·2위가 1.4 벌어져서 넉넉히 잡음
 // 줄자로 다시 줄 세울 때: 가르려고 만든 질문이라 답을 더 무겁게, LLM 순서는 가볍게
 // (박명수 시험: 순서 가산점이 커서 9순위 정답이 줄자 답으로도 못 올라왔음)
@@ -36,8 +37,51 @@ const POLICY = {
     'Is `secret_answer` a politician who is currently active or was active within the last 20 years (in any country), or a criminal, or a person mainly known for crimes, scandals, abuse or hateful acts? Long-dead historical rulers and leaders count as "no".',
 };
 
-// answers: [{ q: 질문 id, a: 답 key }], excluded: 틀린 목록 후보 id, wrong: 틀린 이름 전부 (창고 후보 포함)
-export async function storageSearch({ topicId, answers, excluded, wrong }, deps) {
+// 창고 가기 전 루소의 질문(LLM 이 만든 질문)과 답. 질문은 서버가 서명해서 화면에 맡겼다가 돌려받는다 (화면이 문장을 바꿀 수 없게)
+// extra: [{ token, a }] → [{ text, a }]
+async function verifyExtra(topicId, extra) {
+  const out = [];
+  for (const x of extra.slice(0, ASK_COUNT)) {
+    const payload = await verifyPayload(x?.token);
+    if (payload?.type === 'ask' && payload.topic === topicId && x.a in WEIGHT) out.push({ text: String(payload.text), a: x.a });
+  }
+  return out;
+}
+
+// 판단 표 질문의 답 + 루소의 질문의 답 → LLM 에 보여 줄 [{ question, answer }]
+function qaList(topic, answers, extra) {
+  const questionText = Object.fromEntries(topic.questions.map((q) => [q.id, q.text]));
+  const valid = answers.filter((x) => questionText[x.q] && x.a in WEIGHT).slice(0, 40);
+  const qa = [...valid.map((x) => ({ question: questionText[x.q], answer: LABEL[x.a] })), ...extra.map((x) => ({ question: x.text, answer: LABEL[x.a] }))];
+  return { questionText, valid, qa };
+}
+
+// 창고 가기 전 루소의 질문 하나 (판단 표로 두 번 틀린 뒤 ASK_COUNT 개까지). 실패하면 question: null → 화면은 바로 창고 뒤지기로
+export async function storageAsk({ topicId, answers, wrong, extra }, deps) {
+  const data = topicData(topicId);
+  const topic = loadTopic(topicId, deps.tables()[topicId]);
+  if (!data || !topic) return { question: null, reason: 'topic' };
+  if (!llmReady()) return { question: null, reason: 'no-key' };
+  if (!deps.settings.storageSearch) return { question: null, reason: 'off' };
+  const asked = await verifyExtra(topicId, extra);
+  if (asked.length >= ASK_COUNT) return { question: null, reason: 'done' };
+  // LLM 을 부르는 일이라 창고 뒤지기와 같은 하루 상한을 쓴다
+  if (!(await deps.store.takeSearchQuota(searchLimit(deps.settings)))) return { question: null, reason: 'limit' };
+  const { qa } = qaList(topic, answers, asked);
+  try {
+    const t0 = Date.now();
+    const question = await askQuestion({ topicName: data.name, isPerson: topicId === 'person', qa, wrong });
+    if (!question) return { question: null, reason: 'error' };
+    console.log(`[ask] ${data.name} ${asked.length + 1}번째 ${((Date.now() - t0) / 1000).toFixed(1)}초: ${question}`);
+    return { question, token: await signPayload({ type: 'ask', topic: topicId, text: question }) };
+  } catch (e) {
+    console.error('[ask] LLM 실패:', e.message);
+    return { question: null, reason: 'error' };
+  }
+}
+
+// answers: [{ q: 질문 id, a: 답 key }], excluded: 틀린 목록 후보 id, wrong: 틀린 이름 전부 (창고 후보 포함), extra: 루소의 질문 [{ token, a }]
+export async function storageSearch({ topicId, answers, excluded, wrong, extra = [] }, deps) {
   const data = topicData(topicId);
   const topic = loadTopic(topicId, deps.tables()[topicId]);
   if (!data || !topic) return { candidates: [], reason: 'topic' };
@@ -45,9 +89,8 @@ export async function storageSearch({ topicId, answers, excluded, wrong }, deps)
   if (!deps.settings.storageSearch) return { candidates: [], reason: 'off' }; // 관리 페이지에서 끔
   if (!(await deps.store.takeSearchQuota(searchLimit(deps.settings)))) return { candidates: [], reason: 'limit' };
 
-  const questionText = Object.fromEntries(topic.questions.map((q) => [q.id, q.text]));
-  const valid = answers.filter((x) => questionText[x.q] && x.a in WEIGHT).slice(0, 40);
-  const qa = valid.map((x) => ({ question: questionText[x.q], answer: LABEL[x.a] }));
+  const asked = await verifyExtra(topicId, extra);
+  const { questionText, valid, qa } = qaList(topic, answers, asked);
   const isPerson = topicId === 'person';
   const wrongNames = new Set(wrong.map(norm));
 
@@ -81,15 +124,17 @@ export async function storageSearch({ topicId, answers, excluded, wrong }, deps)
   const pool = [...byName.values()].filter((c) => !wrongNames.has(norm(c.name)) && !excluded.includes(c.id));
 
   // 3) Jev 검증: 질문마다 '예'일 확률 → 사용자 답과 얼마나 맞는지 (게임과 같은 계산)
-  const questions = Object.fromEntries(valid.map((x) => [x.q, tableQuestion(data.name, questionText[x.q])]));
+  // 루소의 질문도 같은 방식으로 판단한다 (키: ask0, ask1)
+  const judged = [...valid.map((x) => ({ key: x.q, text: questionText[x.q], a: x.a })), ...asked.map((x, i) => ({ key: `ask${i}`, text: x.text, a: x.a }))];
+  const questions = Object.fromEntries(judged.map((x) => [x.key, tableQuestion(data.name, x.text)]));
   const scored = await Promise.all(
     pool.map(async (c) => {
       try {
         const res = await askJev({ secret_answer: { name: c.name, english: c.english } }, { ...questions, ...(c.check ? { policy: POLICY } : {}) }, { timeoutMs: 30000 });
         if (c.check && (res.answers?.policy?.noul ?? 0) >= 0.5) return null; // 정치인·범죄자 등 제외
         let jev = 0;
-        for (const x of valid) {
-          const p = clamp(res.answers?.[x.q]?.noul ?? 0.5);
+        for (const x of judged) {
+          const p = clamp(res.answers?.[x.key]?.noul ?? 0.5);
           const w = WEIGHT[x.a];
           jev += Math.log(w * p + (1 - w) * (1 - p));
         }
