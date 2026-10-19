@@ -10,6 +10,6 @@ export function normalizeVariants(record) {
 // 배우별로 맡은 그림 수 (배우를 골고루 고르기 위해)
 export function countActors(records) {
   const counts = {};
-  for (const r of records) for (const v of normalizeVariants(r)) counts[v.actor.id] = (counts[v.actor.id] || 0) + 1;
+  for (const r of records) for (const v of normalizeVariants(r)) if (v?.actor) counts[v.actor.id] = (counts[v.actor.id] || 0) + 1;
   return counts;
 }

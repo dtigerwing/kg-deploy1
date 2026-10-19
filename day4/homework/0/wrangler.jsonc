@@ -20,7 +20,11 @@
 		// 창고 뒤지기 (목록 밖 후보를 떠올리는 Claude 글 모델, 키는 Secrets 의 ANTHROPIC_API_KEY)
 		"CLAUDE_MODEL": "claude-sonnet-5-5",
 		"CLAUDE_EFFORT": "low",
+		"TEXT_MODEL": "gpt-5.6-terra",
+		"TEXT_REASONING": "none",
 		"DAILY_SEARCH_LIMIT": "300"
 	},
+	// 코드를 서울에서 실행: 한국 접속이 홍콩(HKG) 서버로 가면 Anthropic 이 403 "Request not allowed" 로 막아서 (2026-10-19)
+	"placement": { "mode": "targeted", "region": "aws:ap-northeast-2" },
 	"observability": { "enabled": true }
 }

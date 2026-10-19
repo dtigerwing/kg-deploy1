@@ -19,6 +19,7 @@ export const RULES = {
   reguessMax: 3, // 최대 이만큼 묻고 다시 추측
   variedFirst: 3, // 처음 이만큼의 질문은
   variedPool: 5, // 잘 가르는 질문 상위 이만큼 중에서 무작위로 고른다 (시작이 단조롭지 않게)
+  sameMeaning: 0.86, // 판단 표 값의 상관이 이 이상이면 뜻이 같은 질문으로 보고 하나만 묻는다 (예: 새인가요? ↔ 깃털이 있나요?)
 };
 
 const WEIGHT = Object.fromEntries(ANSWERS.map((a) => [a.key, a.weight]));
@@ -54,11 +55,40 @@ const entropy = (weights) => {
   return -weights.reduce((h, w) => (w > 0 ? h + (w / total) * Math.log2(w / total) : h), 0);
 };
 
+// 뜻이 같은 질문 짝: 후보마다의 '예' 확률이 거의 같이(또는 거꾸로) 움직이는 질문끼리. 주제마다 한 번만 계산한다
+const sameCache = new WeakMap();
+function sameMeaning(topic) {
+  if (sameCache.has(topic)) return sameCache.get(topic);
+  const rows = Object.values(topic.table);
+  const cols = topic.questions.map((_, i) => {
+    const v = rows.map((r) => r[i]);
+    const mean = v.reduce((a, b) => a + b, 0) / v.length;
+    const d = v.map((x) => x - mean);
+    const norm = Math.sqrt(d.reduce((a, x) => a + x * x, 0)) || 1;
+    return d.map((x) => x / norm);
+  });
+  const same = Object.fromEntries(topic.questions.map((q) => [q.id, []]));
+  topic.questions.forEach((a, i) => {
+    topic.questions.forEach((b, j) => {
+      if (i < j && Math.abs(cols[i].reduce((s, x, k) => s + x * cols[j][k], 0)) >= RULES.sameMeaning) {
+        same[a.id].push(b.id);
+        same[b.id].push(a.id);
+      }
+    });
+  });
+  sameCache.set(topic, same);
+  return same;
+}
+
 // 남은 후보를 가장 잘 갈라주는 질문 (답을 들은 뒤 불확실성이 가장 작아지는 질문).
 // 비슷하게 좋은 질문 중에서는 무작위로 골라 매번 같은 순서가 되지 않게 한다.
 function pickQuestion(game, post, left) {
   const { questions, table } = game.topic;
   const index = Object.fromEntries(questions.map((q, i) => [q.id, i]));
+  // 이미 분명하게 답한 질문과 뜻이 같은 질문은 빼고 고른다 ("모르겠어요"였다면 같은 뜻으로 다시 물어봐도 됨)
+  const same = sameMeaning(game.topic);
+  const covered = new Set(game.answers.filter((x) => x.a !== 'unknown').flatMap((x) => same[x.q] || []));
+  if (left.some((q) => !covered.has(q.id))) left = left.filter((q) => !covered.has(q.id));
   const scored = left.map((q) => {
     const yes = post.map(({ candidate, p }) => p * clamp(table[candidate.id][index[q.id]]));
     const no = post.map(({ candidate, p }, i) => p - yes[i]);

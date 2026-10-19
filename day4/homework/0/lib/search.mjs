@@ -70,7 +70,7 @@ export async function storageAsk({ topicId, answers, wrong, extra }, deps) {
   const { qa } = qaList(topic, answers, asked);
   try {
     const t0 = Date.now();
-    const question = await askQuestion({ topicName: data.name, isPerson: topicId === 'person', qa, wrong });
+    const question = await askQuestion({ topicName: data.name, isPerson: topicId === 'person', qa, wrong, tableQuestions: topic.questions.map((q) => q.text) });
     if (!question) return { question: null, reason: 'error' };
     console.log(`[ask] ${data.name} ${asked.length + 1}번째 ${((Date.now() - t0) / 1000).toFixed(1)}초: ${question}`);
     return { question, token: await signPayload({ type: 'ask', topic: topicId, text: question }) };
@@ -99,7 +99,7 @@ export async function storageSearch({ topicId, answers, excluded, wrong, extra =
   let probeQuestions = [];
   const t0 = Date.now();
   try {
-    ({ candidates: suggested, questions: probeQuestions } = await suggestCandidates({ topicName: data.name, isPerson, qa, wrong }));
+    ({ candidates: suggested, questions: probeQuestions } = await suggestCandidates({ topicName: data.name, isPerson, qa, wrong, tableQuestions: topic.questions.map((q) => q.text) }));
     console.log(`[search] LLM ${((Date.now() - t0) / 1000).toFixed(1)}초: ${suggested.map((c) => c.name).join(', ')} | 줄자 질문: ${probeQuestions.join(' / ')}`);
   } catch (e) {
     console.error('[search] LLM 실패:', e.message);

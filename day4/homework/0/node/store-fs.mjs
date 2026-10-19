@@ -30,16 +30,19 @@ function findImageFile(topicId, candidateId, n = 0) {
   return null;
 }
 
+// 저장된 그림 목록. 아주 예전 로컬 기록은 { id, by } 만 있고 그림 정보가 없다: 그림 파일이 있으면 0번째 그림으로 친다
+function readVariants(record, topicId, candidateId) {
+  const variants = normalizeVariants(record);
+  const old = !variants.length && record?.id && findImageFile(topicId, candidateId, 0);
+  return old ? [{ actor: { id: record.id, by: record.by }, type: old.type, v: Math.round(fs.statSync(old.f).mtimeMs).toString(36) }] : variants;
+}
+
 const locks = new Set();
 
 export const fsStore = {
   // 정답의 그림 목록 [{ actor, type, v }] (lib/variants.mjs). 그림 파일이 지워졌으면 목록에서 뺀다
   async getVariants(topicId, candidateId) {
-    const record = readJSON('assignments.json', {})[`${topicId}/${candidateId}`];
-    let variants = normalizeVariants(record);
-    // 아주 예전 로컬 기록은 { id, by } 만 있고 그림 정보가 없다: 그림 파일이 있으면 0번째 그림으로 친다
-    const old = !variants.length && record?.id && findImageFile(topicId, candidateId, 0);
-    if (old) variants = [{ actor: { id: record.id, by: record.by }, type: old.type, v: Math.round(fs.statSync(old.f).mtimeMs).toString(36) }];
+    const variants = readVariants(readJSON('assignments.json', {})[`${topicId}/${candidateId}`], topicId, candidateId);
     return variants.filter((_, n) => findImageFile(topicId, candidateId, n));
   },
   async getImage(topicId, candidateId, n = 0) {
@@ -55,7 +58,7 @@ export const fsStore = {
     const v = Math.round(fs.statSync(f).mtimeMs).toString(36);
     const all = readJSON('assignments.json', {});
     const key = `${topicId}/${candidateId}`;
-    const variants = normalizeVariants(all[key]);
+    const variants = readVariants(all[key], topicId, candidateId); // 예전 기록의 0번째 그림을 잃지 않게 (빈 칸이 생기면 배우 세기가 멈춤)
     variants[n] = { actor, type, v };
     writeJSON('assignments.json', { ...all, [key]: { variants } });
     return v;
