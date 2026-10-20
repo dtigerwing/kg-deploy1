@@ -1,4 +1,5 @@
 import type { StreamEvent } from "../../shared/types";
+import { currentIdToken } from "./firebase";
 
 export type ProgressEvent = Exclude<StreamEvent<unknown>, { type: "done" } | { type: "error" }>;
 
@@ -9,48 +10,16 @@ export type ProgressEvent = Exclude<StreamEvent<unknown>, { type: "done" } | { t
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
 export const apiUrl = (path: string) => `${API_BASE}${path}`;
 
-const ACCESS_KEY = "agentic-workflow.access-code";
-
-function readAccessCode(): string {
-  try {
-    return localStorage.getItem(ACCESS_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-function saveAccessCode(code: string) {
-  try {
-    localStorage.setItem(ACCESS_KEY, code);
-  } catch {
-    // 저장소를 쓸 수 없으면 이번 탭에서만 다시 묻습니다.
-  }
-}
-
-let sessionCode = readAccessCode();
-// 서브에이전트 여러 개가 동시에 401을 받아도 코드는 한 번만 묻습니다.
-let pendingPrompt: Promise<string | null> | null = null;
-
-function askAccessCode(rejected: string): Promise<string | null> {
-  if (sessionCode && sessionCode !== rejected) return Promise.resolve(sessionCode); // 다른 요청이 이미 새 코드를 받음
-  pendingPrompt ??= Promise.resolve(window.prompt("접속 코드를 입력하세요")?.trim() || null).finally(() => {
-    pendingPrompt = null;
+/** 로그인 토큰을 붙여 API를 호출합니다. 로컬 개발처럼 로그인을 쓰지 않으면 토큰 없이 보냅니다. */
+export async function fetchApi(path: string, init: RequestInit = {}): Promise<Response> {
+  const token = await currentIdToken();
+  const res = await fetch(apiUrl(path), {
+    ...init,
+    headers: { ...init.headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
-  return pendingPrompt;
-}
-
-/** 접속 코드를 붙여 요청하고, 401이면 코드를 물어본 뒤 한 번 더 시도합니다. */
-async function fetchWithAccess(path: string, init: RequestInit): Promise<Response> {
-  const send = (code: string) => fetch(apiUrl(path), { ...init, headers: { ...init.headers, "X-Access-Code": code } });
-  const used = sessionCode;
-  let res = await send(used);
-  if (res.status === 401) {
-    const entered = await askAccessCode(used);
-    if (!entered) throw new Error("접속 코드가 필요합니다.");
-    res = await send(entered);
-    if (res.status === 401) throw new Error("접속 코드가 올바르지 않습니다.");
-    sessionCode = entered;
-    saveAccessCode(entered);
+  if (res.status === 401 || res.status === 403) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "로그인이 필요합니다.");
   }
   return res;
 }
@@ -64,7 +33,7 @@ export async function callAgent<T>(
   body: unknown,
   opts: { signal?: AbortSignal; onEvent?: (event: ProgressEvent) => void } = {},
 ): Promise<T> {
-  const res = await fetchWithAccess(`/api/${endpoint}`, {
+  const res = await fetchApi(`/api/${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

@@ -1,5 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
-import express, { type NextFunction, type Request, type Response } from "express";
+import express, { type Request, type Response } from "express";
 import type {
   DecomposeRequest,
   EvaluateRequest,
@@ -10,21 +9,12 @@ import type {
   StreamEvent,
 } from "../shared/types";
 import { EFFORT, MODEL, describeError, hasApiKey, type AgentHooks } from "./claude";
+import { authGuard, authRequired, type AuthedRequest } from "./auth";
 import { decompose } from "./agents/decomposer";
 import { plan } from "./agents/planner";
 import { execute } from "./agents/executor";
 import { evaluate } from "./agents/evaluator";
 import { buildPreview } from "./agents/previewBuilder";
-
-/** 접속 코드가 설정돼 있으면(배포 환경) 요청 헤더의 코드와 비교합니다. 로컬에서는 설정하지 않으면 검사하지 않습니다. */
-function accessCodeGuard(req: Request, res: Response, next: NextFunction) {
-  const expected = process.env.ACCESS_CODE?.trim();
-  if (!expected || req.path === "/api/health") return next();
-  const given = Buffer.from(String(req.get("x-access-code") ?? ""));
-  const want = Buffer.from(expected);
-  if (given.length === want.length && timingSafeEqual(given, want)) return next();
-  res.status(401).json({ error: "접속 코드가 필요합니다." });
-}
 
 /**
  * 에이전트 실행을 NDJSON 스트림으로 감싸는 라우트.
@@ -78,17 +68,16 @@ export function createApp() {
   const json = express.json({ limit: "10mb" });
   // Cloud Functions는 본문을 미리 파싱해 두므로, 아직 파싱되지 않은 경우에만 파싱합니다.
   app.use((req, res, next) => (req.body !== undefined ? next() : json(req, res, next)));
-  app.use(accessCodeGuard);
+  app.use(authGuard);
 
   app.get("/api/health", (_req, res) => {
-    const body: HealthResponse = {
-      ok: true,
-      hasApiKey: hasApiKey(),
-      model: MODEL,
-      effort: EFFORT,
-      accessRequired: Boolean(process.env.ACCESS_CODE?.trim()),
-    };
+    const body: HealthResponse = { ok: true, hasApiKey: hasApiKey(), model: MODEL, effort: EFFORT, authRequired: authRequired() };
     res.json(body);
+  });
+
+  // 로그인한 계정이 허용됐는지 확인 (허용되지 않았으면 authGuard가 403을 돌려줍니다)
+  app.get("/api/me", (req: AuthedRequest, res) => {
+    res.json({ email: req.userEmail ?? null, allowed: true });
   });
 
   app.post("/api/decompose", agentRoute<DecomposeRequest, Awaited<ReturnType<typeof decompose>>>(decompose));

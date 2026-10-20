@@ -5,7 +5,8 @@ import { defineSecret } from "firebase-functions/params";
 import { createApp } from "../../server/app";
 
 const anthropicKey = defineSecret("ANTHROPIC_API_KEY");
-const accessCode = defineSecret("ACCESS_CODE");
+// 쉼표로 구분한 허용 이메일 목록 (Google 로그인 계정)
+const allowedEmails = defineSecret("ALLOWED_EMAILS");
 
 export const api = onRequest(
   {
@@ -16,7 +17,7 @@ export const api = onRequest(
     // 비용 폭주를 막기 위한 상한. 한 인스턴스가 여러 요청을 동시에 처리합니다.
     maxInstances: 3,
     concurrency: 40,
-    secrets: [anthropicKey, accessCode],
+    secrets: [anthropicKey, allowedEmails],
     cors: ["https://kg-kdh-agentic.web.app", "https://kg-kdh-agentic.firebaseapp.com", "http://localhost:5173"],
   },
   createApp(),

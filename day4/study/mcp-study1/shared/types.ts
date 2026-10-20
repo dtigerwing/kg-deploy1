@@ -99,8 +99,8 @@ export interface HealthResponse {
   hasApiKey: boolean;
   model: string;
   effort: string;
-  /** 배포 환경처럼 접속 코드가 필요한지 */
-  accessRequired: boolean;
+  /** 배포 환경처럼 Google 로그인(허용 이메일)이 필요한지 */
+  authRequired: boolean;
 }
 
 // ---------------------------------------------------------------------------
