@@ -26,12 +26,30 @@
 - 모델은 `claude-opus-5-5`, effort `low`이고, 거절 시 다른 모델로 넘기는 fallback을 켜 뒀어요. 기록 한 번에 Claude 호출 3번, 20초 안팎 걸려요.
 
 ### 아직 안 된 것
-- **Firebase 설정이 안 돼 있어요.** 그래서 Firestore 저장과 배포(`npm run deploy`)를 아직 못 했어요. 지금은 `--dry-run`으로만 확인했어요.
-  - `public/firebase-config.js`의 값이 비어 있어요.
-  - `serviceAccount.json`이 없어요.
-  - `npx firebase login`을 아직 안 했어요.
-  - 새 프로젝트를 만들지, 4일차의 `kg-kdh-agentic` 프로젝트를 쓸지 아직 안 정했어요.
+- **Firebase 설정 진행 중.** 그래서 Firestore 저장과 배포(`npm run deploy`)를 아직 못 했어요. 지금은 `--dry-run`으로만 확인했어요. 아래 체크리스트를 따라 하고 있어요.
 - 이전 기록과의 비교("+X MB", "하락")는 Firestore에 기록이 이틀 이상 쌓여야 실제 화면에서 확인할 수 있어요.
+
+### Firebase 설정 체크리스트 (진행 중)
+새 Firebase 프로젝트를 만들기로 했어요. 1~2단계는 안내를 받았고, 실제로 끝났는지는 아직 확인 전이에요. 프로젝트 ID도 아직 기록하지 않았어요.
+
+- [ ] **1단계: 프로젝트 만들기** ([Firebase 콘솔](https://console.firebase.google.com))
+  - 개인 Google 계정 추천. 프로젝트 이름 예: `dev-journal-kdh`
+  - 프로젝트 ID가 웹 주소(`프로젝트ID.web.app`)가 되고, 만든 뒤에는 바꿀 수 없어요.
+  - Gemini 옵션은 상관없음, Google 애널리틱스는 사용 안 함, 요금제는 Spark(무료) 그대로
+  - 프로젝트 ID: `(아직 기록 안 함)`
+- [ ] **2단계: Firestore 데이터베이스 만들기** (빌드 > Firestore Database > 데이터베이스 만들기)
+  - Standard 에디션, 데이터베이스 ID는 `(default)` 그대로
+  - 위치는 `asia-northeast3 (서울)`. 나중에 못 바꿔요.
+  - 보안 규칙은 프로덕션 모드. 배포할 때 `firestore.rules`(읽기만 허용)로 바뀌어요.
+- [ ] **3단계: 웹 앱 등록** (프로젝트 설정 > 내 앱 > 웹 `</>`)
+  - 나오는 설정 값(apiKey, authDomain, projectId, appId)을 `public/firebase-config.js`에 넣기
+- [ ] **4단계: 서비스 계정 키** (프로젝트 설정 > 서비스 계정 > 새 비공개 키 생성)
+  - 받은 파일을 `day5/homework/serviceAccount.json`으로 저장. git에는 안 올라가요. 노트북마다 따로 받아야 해요.
+- [ ] **5단계: CLI 로그인과 프로젝트 연결** (`day5/homework`에서)
+  - `npx firebase login`
+  - `npx firebase use --add` 로 프로젝트 고르기 (`.firebaserc`가 생겨요)
+- [ ] **6단계: 첫 기록 저장** — `/record-today` 또는 모아 둔 `journal-tmp/`로 `npm run record` (`--dry-run` 없이)
+- [ ] **7단계: 배포** — `npm run deploy` 후 `프로젝트ID.web.app` 확인
 
 ## 테스트한 Unity 프로젝트에서 알게 된 것
 
@@ -63,7 +81,7 @@ git에는 코드와 문서만 올라가요. 아래 파일은 노트북마다 따
 
 ## 다음 할 일
 
-1. Firebase 프로젝트 정하고 설정하기 (README "처음 설정" 4번)
+1. 위 "Firebase 설정 체크리스트" 1~5단계 마치기
 2. 첫 기록 저장: `/record-today` (또는 이미 모아 둔 `journal-tmp/`로 `npm run record`)
 3. `npm run deploy`로 배포하고 `xxx.web.app` 확인하기
 4. 다음 날 한 번 더 기록해서 비교 화면 확인하기
