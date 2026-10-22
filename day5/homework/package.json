@@ -1,25 +1,17 @@
 {
-  "name": "unity-work-report",
-  "version": "1.0.0",
-  "description": "",
-  "scripts": {
-    "build:client": "tsc -p tsconfig.client.json",
-    "dev": "npm run build:client && tsx src/server.ts",
-    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "name": "dev-journal",
+  "private": true,
   "type": "module",
+  "scripts": {
+    "record": "node --env-file=.env scripts/journal.mjs record",
+    "weekly": "node --env-file=.env scripts/journal.mjs weekly",
+    "deploy": "firebase deploy --only hosting,firestore:rules"
+  },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.137.0",
-    "express": "^5.3.0",
-    "zod": "^4.6.7"
+    "@anthropic-ai/sdk": "^1.1.0",
+    "firebase-admin": "^14.5.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^26.6.5",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "firebase-tools": "^15.34.1"
   }
 }

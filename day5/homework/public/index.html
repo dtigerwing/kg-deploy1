@@ -1,78 +1,22 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Unity 작업 리포트</title>
-    <link rel="stylesheet" href="report.css" />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <header class="topbar">
-      <h1>Unity 작업 리포트</h1>
-      <span id="model-badge" class="badge"></span>
-      <span id="key-status" class="badge"></span>
-    </header>
-
-    <div class="layout">
-      <aside class="panel">
-        <section>
-          <h2>1. 프로젝트</h2>
-          <select id="project"></select>
-          <p id="project-path" class="hint"></p>
-        </section>
-
-        <section>
-          <h2>2. 기간</h2>
-          <div class="period">
-            <input id="from" type="date" aria-label="시작일" />
-            <span>~</span>
-            <input id="to" type="date" aria-label="종료일" />
-          </div>
-          <div class="quick">
-            <button type="button" data-days="1">오늘</button>
-            <button type="button" data-days="7">최근 7일</button>
-            <button type="button" data-days="30">최근 30일</button>
-          </div>
-        </section>
-
-        <section>
-          <h2>3. 작업 묶음 <span id="chunk-total" class="optional"></span></h2>
-          <p class="hint">세션 하나의 하루치 작업이 묶음 하나입니다. 묶음마다 요약 서브에이전트가 하나씩 붙습니다.</p>
-          <ul id="chunk-list" class="chunk-list"></ul>
-        </section>
-
-        <button id="run" class="primary" type="button" disabled>리포트 만들기</button>
-
-        <section>
-          <h2>진행 상황</h2>
-          <ol class="steps">
-            <li id="step-extract" data-state="idle"><strong>기록에서 작업 추출</strong><span class="step-msg">대기</span></li>
-            <li id="step-summarize" data-state="idle"><strong>요약 서브에이전트</strong><span class="step-msg">대기</span></li>
-            <li id="step-aggregate" data-state="idle"><strong>취합 에이전트</strong><span class="step-msg">대기</span></li>
-          </ol>
-          <p id="error" class="error" hidden></p>
-        </section>
-      </aside>
-
-      <main class="stage">
-        <div class="toolbar">
-          <span id="report-meta" class="hint"></span>
-          <div class="actions">
-            <button id="save-json" type="button" disabled>원본 데이터(.json)</button>
-            <button id="save-html" class="primary" type="button" disabled>저장</button>
-          </div>
-        </div>
-        <div class="stage-body">
-          <div id="empty" class="empty">
-            프로젝트와 기간을 고르고 <strong>리포트 만들기</strong>를 누르면<br />
-            그동안 한 일, 결과, 진행 상황을 정리해 이곳에 보여 줍니다.
-          </div>
-          <article id="report" class="report" hidden></article>
-        </div>
-      </main>
-    </div>
-
-    <script type="module" src="app.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>개발 일지</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="layout">
+    <nav class="side">
+      <h1 class="side-title">개발 일지</h1>
+      <div id="dayList" class="list"></div>
+      <div id="weekList" class="list weeks"></div>
+    </nav>
+    <main id="main" class="main">
+      <p class="muted">불러오는 중…</p>
+    </main>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
 </html>

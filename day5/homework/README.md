@@ -1,56 +1,68 @@
-# Unity 작업 리포트 (5일차 과제 2단계)
+# 개발 일지
 
-Claude Code + Unity MCP로 작업한 기록을 원할 때 모아서
-**한 일 / 결과 / 진행 상황 / 막혔던 문제 / 남은 일**을 리포트로 정리합니다.
-**저장** 버튼을 누르면 리포트 원본이 내 컴퓨터에 파일로 저장됩니다.
+Unity 작업 하루를 기록하는 웹이에요. 퇴근 전에 Claude Code에서 `/record-today` 를 실행하면
+커밋, 빌드 용량, 콘솔 경고, 씬 성능을 모아 Claude 분석 에이전트들이 분석하고 요약을 쓴 뒤 Firestore에 저장해요.
+웹(`xxx.web.app`)은 그 기록을 날짜별로 보여줘요. 지금 진행 상황은 [PROGRESS.md](PROGRESS.md)에 있어요.
 
 ```
-~/.claude/projects/*.jsonl ─▶ [추출: 코드] ─▶ 작업 묶음 N개 ─▶ [요약 서브에이전트 × N, 병렬] ─▶ [취합 에이전트] ─▶ 리포트 ─▶ [저장]
+Unity 에디터 ──(Unity MCP)──> 빌드 리포트 + 임포트 설정, 콘솔 경고 + Missing Script, 씬 성능
+Unity 프로젝트 git ─────────> 오늘 커밋
+          └─> scripts/journal.mjs
+                ├─ 빌드 분석 에이전트 ─┐  (동시에 실행)
+                ├─ 경고 분석 에이전트 ─┤
+                └──────────────────────┴─> 요약 ─> Firestore days/{날짜} ─> 웹 (Firebase Hosting)
 ```
 
-- 데이터: Claude Code가 남기는 대화 기록. 요청, Unity MCP 호출(성공/실패), 수정한 파일, 할 일 목록, 마무리 요약, 서브에이전트 기록을 읽습니다.
-- 작업 묶음: 세션 하나의 하루치 작업. 묶음마다 요약 서브에이전트가 하나씩 붙습니다(동시에 최대 4개).
-- 모델: `claude-opus-5-5`, effort `high` (`src/config.ts`). 거절 대비로 `fallbacks: "default"`가 켜져 있습니다.
-- 비용 예시: 묶음 2개(요청 6개, MCP 호출 202회) 리포트 한 번에 약 4만 토큰, 약 $0.3, 1분 30초.
+## 과제 항목
 
-## 실행
-
-1. `.env` 파일의 `ANTHROPIC_API_KEY=` 뒤에 API 키를 붙여 넣습니다.
-2. 처음 한 번만 패키지를 설치합니다.
-
-```bash
-npm install
-```
-
-3. 서버를 켜고 http://localhost:3000 을 엽니다.
-
-```bash
-npm run dev
-```
-
-4. 프로젝트와 기간을 고르면 작업 묶음 목록이 나옵니다(여기까지는 API 비용 없음). **리포트 만들기**를 누릅니다.
-
-## 알아 둘 점
-
-- Claude Code로 한 작업만 잡힙니다. Unity 에디터에서 손으로 한 작업은 기록에 없습니다.
-- Claude Code 기록 형식은 공개 문서가 없는 내부 형식이라, 업데이트 후 읽는 부분(`src/transcripts.ts`)을 고쳐야 할 수 있습니다.
-- 리포트를 만들 때 작업 내용(스크립트 이름, 코드 일부, 에러 메시지)이 Anthropic API로 전송됩니다.
-- 기록 폴더가 다른 곳에 있으면 `.env`에 `CLAUDE_PROJECTS_DIR=경로`를 넣습니다.
-
-## 폴더 구조
-
-| 경로 | 역할 |
+| 과제 | 이 프로젝트에서 |
 |---|---|
-| `src/transcripts.ts` | 기록 읽기, Unity 프로젝트 찾기, 작업 묶음·통계 만들기 |
-| `src/agents/summarizer.ts` | 요약 서브에이전트 (작업 묶음 → 요약 JSON) |
-| `src/agents/aggregator.ts` | 취합 에이전트 (요약 모음 → 기간 리포트 JSON) |
-| `src/workflow.ts` | 추출 → 병렬 요약 → 취합 순서로 실행 |
-| `src/server.ts` | Express 서버, 진행 상황을 한 줄씩 스트리밍 |
-| `client/report.ts` | 리포트 그리기 (화면과 저장 파일이 같은 코드 사용) |
-| `client/app.ts` | 화면 로직 (`npm run dev` 때 `public/`으로 빌드) |
+| 1단계 MCP 연결 | Unity MCP로 빌드 리포트·임포트 설정 읽기, 콘솔 경고와 Missing Script 세기, Play 모드 성능 측정 (`.claude/commands/record-today.md`, `unity-snippets/`) |
+| 2단계 데이터가 쌓이는 웹 + Firebase 배포 | Firestore `days`, `weeks` 컬렉션 + Firebase Hosting (`public/`) |
+| 추가 Claude API 기능 | 빌드 용량·콘솔 경고 분석 에이전트, 하루 요약, 주간 보고 작성 (`scripts/agents.mjs`, `scripts/journal.mjs`) |
 
-## 다음 단계: Firebase / Firestore
+## 처음 설정
 
-- 저장 버튼의 `saveFile()`(`client/app.ts`) 자리에서 Firestore `reports/{id}` 문서로 저장하면 됩니다.
-  `ReportRun`(`src/types.ts`)은 처음부터 평범한 JSON이라 그대로 넣을 수 있고, 날짜별로 쌓으면 진행 추이를 볼 수 있습니다.
-- 기록 파일은 내 컴퓨터에만 있으므로 "기록 읽기 + 에이전트 실행"은 로컬 서버에 두고, 결과만 Firestore에 올리는 구조가 자연스럽습니다.
+1. 패키지 설치: `npm install`
+2. `.env` 에 `ANTHROPIC_API_KEY` 넣기 (`.env.example` 참고)
+3. `journal.config.json` 의 `unityProject` 에 Unity 프로젝트 경로 넣기. `scenes` 를 비워 두면 Build Settings의 씬을 전부 측정해요.
+4. Firebase
+   1. [Firebase 콘솔](https://console.firebase.google.com)에서 프로젝트를 만들고 Firestore 데이터베이스를 만들어요.
+   2. 프로젝트 설정 > 내 앱 > 웹 앱을 추가하고, 나온 값을 `public/firebase-config.js` 에 넣어요.
+   3. 프로젝트 설정 > 서비스 계정 > 새 비공개 키 생성으로 받은 파일을 `serviceAccount.json` 이름으로 이 폴더에 둬요. git에는 올라가지 않아요.
+   4. `npx firebase login` 후 `npx firebase use --add` 로 프로젝트를 골라요.
+5. 배포: `npm run deploy`
+
+## 매일 쓰기
+
+- 퇴근 전: Claude Code에서 `/record-today` (Unity 에디터가 켜져 있어야 해요)
+- 금요일: `/weekly-report`
+- 로컬에서 화면 보기: `python3 -m http.server 5173 --directory public`
+- Firestore에 저장하지 않고 결과만 보기: `npm run record -- --dry-run`
+
+## 파일 구성
+
+| 경로 | 하는 일 |
+|---|---|
+| `.claude/commands/record-today.md` | `/record-today` 절차 (Unity MCP로 수집 → 저장) |
+| `.claude/commands/weekly-report.md` | `/weekly-report` 절차 |
+| `unity-snippets/` | Unity `execute_code`로 실행하는 C# (빌드 리포트, 콘솔 경고) |
+| `scripts/journal.mjs` | 기록·주간 보고 스크립트 (git 커밋 읽기, Firestore 저장) |
+| `scripts/compare.mjs` | 이전 기록과 비교 (빌드 증감, 성능 하락) |
+| `scripts/agents.mjs` | 빌드 분석·경고 분석 에이전트 |
+| `scripts/claude.mjs` | Claude API 호출 |
+| `public/` | 웹 화면. `firebase-config.js`가 비어 있으면 `sample-data.js`를 보여줘요 |
+| `journal-tmp/` | 수집한 중간 파일 (git에 안 올라가요) |
+
+## 판정 기준
+
+- 빌드 용량: 가장 최근에 빌드를 기록한 날과 비교해요. 에셋별로 커진 것 10개를 보여줘요.
+- 씬 성능: 최근 7일 기록의 평균 프레임 시간보다 10% 넘게 느려지면 "하락"이에요. 에디터에서 잰 값이라 실기기와 다르니 추이 비교용으로 보세요.
+- 비교 로직은 `scripts/compare.mjs`에 따로 있어서 Firebase 없이도 테스트할 수 있어요.
+
+## 알아둘 점
+
+- 커밋은 Unity 프로젝트의 git에서 읽어요. git 저장소가 아니면 커밋 없이 기록돼요.
+- 빌드 용량은 `Library/LastBuild.buildreport`에서 읽어요. 기록하는 날 빌드를 안 했으면 건너뛰어요.
+- 성능 측정은 씬마다 Play 모드를 켜서 재기 때문에, 씬 6개 기준 2~3분 걸려요. 측정이 끝나면 원래 열려 있던 씬으로 돌아가요.
+- 프레임 시간은 `get_frame_timing`의 `cpu_frame_time_ms`, 드로우콜은 Render 카운터의 `Draw Calls Count`예요.
