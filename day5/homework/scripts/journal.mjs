@@ -94,7 +94,7 @@ function readCommits(project, day) {
     out = execFileSync(
       "git",
       ["-C", project, "log", "--reverse", `--since=${day} 00:00`, `--until=${addDays(day, 1)} 00:00`,
-        "--date=format:%H:%M", "--pretty=format:%x1e%h%x1f%ad%x1f%s", "--name-only"],
+        "--date=format-local:%H:%M", "--pretty=format:%x1e%h%x1f%ad%x1f%s", "--name-only"],
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
     );
   } catch {

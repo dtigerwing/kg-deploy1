@@ -1,6 +1,6 @@
 # 진행 상황 (5일차 과제: 개발 일지)
 
-> 마지막 갱신: 2026-10-22
+> 마지막 갱신: 2026-10-23
 > 다른 노트북에서 이어서 할 때는 이 문서를 먼저 읽으세요. Claude Code에는 "PROGRESS.md 읽고 이어서 하자"라고 하면 돼요.
 
 ## 과제와 결정한 것
@@ -26,32 +26,42 @@
 - 모델은 `claude-opus-5-5`, effort `low`이고, 거절 시 다른 모델로 넘기는 fallback을 켜 뒀어요. 기록 한 번에 Claude 호출 3번, 20초 안팎 걸려요.
 
 ### 아직 안 된 것
-- **Firebase 설정 진행 중.** 그래서 Firestore 저장과 배포(`npm run deploy`)를 아직 못 했어요. 지금은 `--dry-run`으로만 확인했어요. 아래 체크리스트를 따라 하고 있어요.
+- **Firebase 설정과 배포가 끝났어요(2026-10-23).** 첫 기록 `days/2026-10-23`이 Firestore에 있고, https://kdh-agentic.web.app 에서 보여요. 규칙도 확인했어요(days 읽기 200, 쓰기 403, 다른 컬렉션 403).
+- **씬 성능은 Unity 안 측정기로 재요(2026-10-23에 바꿈).** Claude에게 명령하는 동안 Unity가 비활성이 되면 Play 모드가 거의 멈춰서(프레임 100~200ms, 드로우콜 0), MCP로 1초마다 읽으면 값이 틀려요. 그래서 `unity-snippets/perf.cs`를 Play 모드에 들어간 뒤 걸어요. 이 측정기는 Unity가 활성일 때만 2초 준비하고 `sampleSeconds` 동안 매 프레임 잰 뒤, `journal-tmp/perf-<씬>.json`을 쓰고 Play 모드를 멈춰요. 2분 안에 못 재면 `error`를 써요. `record-today.md` 1·4단계도 이 방식으로 고쳤어요(MCP 인스턴스 확인, 이전 중간 파일 옮기기 포함).
+  - FrameTimingManager가 가끔 터무니없는 값(34억 ms)을 돌려줘서, 1초를 넘거나 0 이하인 값은 그 프레임 간격으로 바꿔 넣어요. `medianMs`·`dropped`도 같이 써서 측정이 흔들렸는지 볼 수 있어요.
+  - 2026-10-23 10:49 `/record-today`에서 `perf.cs`를 처음 끝까지 돌렸고, 잘 동작했어요(SampleScene 0.7ms, 드로우콜 19, 7,148프레임, 걸러낸 값 0). 2분 제한(`error`) 경로는 아직 실제로 겪어 보지 않았어요.
+- 첫 Android 빌드(10:48)가 기록됐어요. 815.7MB인데 그중 에셋은 6.3MB예요. 경고 1건은 Debug Symbols 설정이에요(Diagnostics Data가 켜져 있으면 SymbolTable 이상이 필요).
+- `scripts/journal.mjs`의 커밋 시각을 `format-local`로 고쳤어요. UTC로 찍힌 커밋(GitHub 웹에서 만든 Initial commit 등)이 01:17처럼 나오던 문제예요.
 - 이전 기록과의 비교("+X MB", "하락")는 Firestore에 기록이 이틀 이상 쌓여야 실제 화면에서 확인할 수 있어요.
 
 ### Firebase 설정 체크리스트 (진행 중)
-새 Firebase 프로젝트를 만들기로 했어요. 1~2단계는 안내를 받았고, 실제로 끝났는지는 아직 확인 전이에요. 프로젝트 ID도 아직 기록하지 않았어요.
+새 프로젝트를 만드는 대신, 비어 있던 기존 프로젝트 `kdh-agentic`을 쓰기로 했어요(2026-10-23). 계정은 `kimdohan2@gmail.com`이에요. 4일차 과제는 `kg-kdh-agentic`을 쓰니 헷갈리지 마세요.
 
-- [ ] **1단계: 프로젝트 만들기** ([Firebase 콘솔](https://console.firebase.google.com))
-  - 개인 Google 계정 추천. 프로젝트 이름 예: `dev-journal-kdh`
-  - 프로젝트 ID가 웹 주소(`프로젝트ID.web.app`)가 되고, 만든 뒤에는 바꿀 수 없어요.
-  - Gemini 옵션은 상관없음, Google 애널리틱스는 사용 안 함, 요금제는 Spark(무료) 그대로
-  - 프로젝트 ID: `(아직 기록 안 함)`
-- [ ] **2단계: Firestore 데이터베이스 만들기** (빌드 > Firestore Database > 데이터베이스 만들기)
+- [x] **1단계: 프로젝트** — `kdh-agentic` (웹 주소 `kdh-agentic.web.app`)
+- [x] **2단계: Firestore 데이터베이스 만들기** — 콘솔에서 만들었고 CLI로 확인했어요(2026-10-23, Standard, `(default)`, `asia-northeast3`).
+  - 참고: 처음엔 Firestore API가 꺼져 있어서 CLI(`firestore:databases:create`)로는 403이 났어요. 콘솔에서 만들면 API도 같이 켜져요.
   - Standard 에디션, 데이터베이스 ID는 `(default)` 그대로
   - 위치는 `asia-northeast3 (서울)`. 나중에 못 바꿔요.
   - 보안 규칙은 프로덕션 모드. 배포할 때 `firestore.rules`(읽기만 허용)로 바뀌어요.
-- [ ] **3단계: 웹 앱 등록** (프로젝트 설정 > 내 앱 > 웹 `</>`)
-  - 나오는 설정 값(apiKey, authDomain, projectId, appId)을 `public/firebase-config.js`에 넣기
-- [ ] **4단계: 서비스 계정 키** (프로젝트 설정 > 서비스 계정 > 새 비공개 키 생성)
+- [x] **3단계: 웹 앱 등록** — CLI로 웹 앱 `dev-journal`을 만들고 설정 값을 `public/firebase-config.js`에 넣었어요.
+  - 이제 projectId가 있어서 웹은 예시 데이터 대신 Firestore를 읽어요. Firestore와 첫 기록이 생기기 전까지는 화면이 비어 있을 수 있어요.
+- [x] **4단계: 서비스 계정 키** (프로젝트 설정 > 서비스 계정 > 새 비공개 키 생성) — 이 노트북은 2026-10-23에 받아 둠
   - 받은 파일을 `day5/homework/serviceAccount.json`으로 저장. git에는 안 올라가요. 노트북마다 따로 받아야 해요.
-- [ ] **5단계: CLI 로그인과 프로젝트 연결** (`day5/homework`에서)
-  - `npx firebase login`
-  - `npx firebase use --add` 로 프로젝트 고르기 (`.firebaserc`가 생겨요)
-- [ ] **6단계: 첫 기록 저장** — `/record-today` 또는 모아 둔 `journal-tmp/`로 `npm run record` (`--dry-run` 없이)
-- [ ] **7단계: 배포** — `npm run deploy` 후 `프로젝트ID.web.app` 확인
+- [x] **5단계: CLI 로그인과 프로젝트 연결** (`day5/homework`에서)
+  - `npx firebase login` — 로그인 정보는 노트북마다 따로라서, 다른 노트북에서는 다시 해야 해요.
+  - `.firebaserc`에 `kdh-agentic`을 연결해 뒀어요(git에 올라가요).
+- [x] **6단계: 첫 기록 저장** — 2026-10-23, `ai-agent` 프로젝트. 빌드 없음(빌드 리포트 없음), 경고 0, SampleScene 1.0ms / 드로우콜 24.1
+- [x] **7단계: 배포** — 2026-10-23 `npm run deploy`, `kdh-agentic.web.app`에서 첫 기록이 보이는 것 확인
 
 ## 테스트한 Unity 프로젝트에서 알게 된 것
+
+### ai-agent (2026-10-23부터 기록 대상)
+- 경로: `/Users/kimdohan/Desktop/Unity/Dev/ToyProject/ai-agent/ai-agent` (Unity 6000.3.18f1, git 있음). Build Settings 씬은 SampleScene 하나예요.
+- Unity 에디터를 여러 개 열어 두면 MCP가 다른 프로젝트에 붙을 수 있어요. 이 노트북에서는 회사 프로젝트 `Cocobi_BabyCare2`(포트 6400)에 먼저 붙어 있었어요. 기록 전에 `set_active_instance`로 `ai-agent@1dc2f05d`를 고르고, `Application.productName`으로 확인하세요. 인스턴스 목록은 `~/.unity-mcp/unity-mcp-status-*.json`에서 볼 수 있어요.
+- **회사 프로젝트에는 MCP로 접근하지 않기로 했어요(2026-10-23).** 읽기도 안 돼요. 그래서 `/record-today`는 Unity 도구를 부르기 전에 상태 파일에서 ai-agent 인스턴스를 먼저 찾아 고르고, 없으면 MCP 연결을 켜 달라고 요청하고 멈춰요(`CLAUDE.md`, `record-today.md` 1단계).
+  - ai-agent 에디터가 켜져 있어도 MCP 브리지가 꺼져 있으면 상태 파일이 없고 `set_active_instance`가 실패해요. 그때는 ai-agent 에디터에서 Window > MCP for Unity로 연결을 켜야 해요.
+
+### Project_B_RayFire (어젯밤 노트북에서 테스트)
 
 - 프로젝트: `Project_B_RayFire` (Unity 6000.3.18f1, URP, 빌드 대상 macOS). Build Settings 씬은 StageSelect, Stage01~05예요.
 - **git 저장소가 아니라서** 커밋이 기록되지 않아요. `git init`을 하면 다음 기록부터 커밋이 남아요.
@@ -81,8 +91,5 @@ git에는 코드와 문서만 올라가요. 아래 파일은 노트북마다 따
 
 ## 다음 할 일
 
-1. 위 "Firebase 설정 체크리스트" 1~5단계 마치기
-2. 첫 기록 저장: `/record-today` (또는 이미 모아 둔 `journal-tmp/`로 `npm run record`)
-3. `npm run deploy`로 배포하고 `xxx.web.app` 확인하기
-4. 다음 날 한 번 더 기록해서 비교 화면 확인하기
-5. (선택) Unity 프로젝트 `git init`, 성능 분석·코드 리뷰 에이전트 추가, 게임 Firebase 연동
+1. 다음 날 `/record-today`로 한 번 더 기록해서 비교 화면("+X MB", "하락") 확인하기
+2. (선택) Unity 프로젝트 `git init`, 성능 분석·코드 리뷰 에이전트 추가, 게임 Firebase 연동
