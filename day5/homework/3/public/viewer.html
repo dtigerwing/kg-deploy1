@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unity 현황 기록</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1 id="projectName">Unity 현황 기록</h1>
+        <p id="projectMeta" class="muted">노트북에서 읽은 현황과 에이전트 보고서를 모아 보는 곳이에요. 여기서는 보기만 해요.</p>
+      </div>
+      <div class="top-actions">
+        <span id="userEmail" class="muted"></span>
+        <button id="refreshBtn" type="button" hidden>새로 읽기</button>
+        <button id="signOutBtn" class="secondary small" type="button" hidden>로그아웃</button>
+      </div>
+    </header>
+    <p id="notice" class="notice" hidden></p>
+    <p id="refreshInfo" class="muted small" hidden>"새로 읽기"는 노트북이 꺼져 있어도 Bitbucket에 푸시된 내용으로 갱신해요. 콘솔·빌드·Missing Script·커밋 안 한 변경은 노트북에서 읽을 때만 보여요.</p>
+
+    <section id="signIn" class="card empty-state" hidden>
+      <p>구글 계정으로 로그인해야 볼 수 있어요.</p>
+      <p class="muted">등록된 계정만 기록을 읽을 수 있어요.</p>
+      <div class="actions" style="justify-content: flex-start"><button id="signInBtn" type="button">Google로 로그인</button></div>
+    </section>
+
+    <div id="viewer" class="viewer" hidden>
+      <nav class="side">
+        <p class="label">현황 기록</p>
+        <div id="snapList" class="list"></div>
+        <p class="label side-gap">에이전트 보고서</p>
+        <div id="reportList" class="list"></div>
+      </nav>
+
+      <div class="stack">
+        <p class="muted small"><span id="readAt"></span></p>
+
+        <section id="dashboard" class="stack" hidden>
+          <div id="metrics" class="metrics"></div>
+          <div id="platforms" class="grid2"></div>
+          <div class="grid2">
+            <div class="card"><p class="label">씬별 오브젝트와 Missing Script (씬 파일 기준)</p><div id="scenes"></div></div>
+            <div class="card"><p class="label">에셋 구성 (Assets 원본 파일 용량)</p><div id="assets"></div></div>
+          </div>
+          <div class="grid2">
+            <div class="card"><p class="label" id="commitsLabel">최근 커밋</p><div id="commits"></div></div>
+            <div class="card"><p class="label" id="changesLabel">커밋 안 한 변경</p><div id="changes"></div></div>
+          </div>
+          <div class="grid2">
+            <div class="card"><p class="label">콘솔 에러·경고</p><div id="console"></div></div>
+            <div class="card"><p class="label">패키지</p><div id="packages"></div></div>
+          </div>
+        </section>
+
+        <section id="report" class="card agent-panel-card" hidden></section>
+        <section id="previewCard" class="card" hidden>
+          <p class="label">프리뷰 (업무 쪼개기 결과)</p>
+          <iframe id="preview" class="preview" sandbox="" title="취합된 결과물 프리뷰"></iframe>
+        </section>
+
+        <section id="emptyState" class="card empty-state" hidden>
+          <p>아직 저장된 기록이 없어요.</p>
+          <p class="muted">노트북에서 3번 서버를 켜고 "새로 읽기"나 에이전트 버튼을 누르면 여기에 쌓여요.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="viewer.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>개발팀 일정표</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://accounts.google.com/gsi/client" async></script>
+</head>
+<body>
+  <header class="bar">
+    <h1>개발팀 일정표</h1>
+    <div class="sheet-info" id="sheet-info" hidden>
+      <span id="sheet-title" class="muted"></span>
+      <select id="tab" aria-label="시트 탭"></select>
+      <button id="reload">새로고침</button>
+      <button id="change-link">링크 바꾸기</button>
+    </div>
+  </header>
+
+  <main id="connect">
+    <section class="card connect">
+      <h2>구글 시트 연결</h2>
+      <p class="muted">일정표 구글 시트의 링크를 붙여넣으세요. 회사 구글 계정으로 로그인해서 읽기만 해요.</p>
+      <form id="connect-form">
+        <input id="link" type="url" required placeholder="https://docs.google.com/spreadsheets/d/…" aria-label="구글 시트 링크">
+        <button id="connect-btn">불러오기</button>
+      </form>
+      <p id="connect-msg" class="msg"></p>
+      <button id="local" class="link" hidden>테스트용: 엑셀 변환 파일로 보기</button>
+    </section>
+  </main>
+
+  <div id="app" hidden>
+    <div class="filters">
+      <div class="people" id="people" aria-label="대상자"></div>
+      <div class="controls">
+        <div class="tabs" id="units" role="tablist"></div>
+        <div class="nav" id="nav">
+          <button id="prev" aria-label="이전">‹</button>
+          <button id="today">오늘</button>
+          <button id="next" aria-label="다음">›</button>
+        </div>
+        <div class="range" id="range" hidden>
+          <input type="date" id="start" aria-label="시작일"> ~ <input type="date" id="end" aria-label="종료일">
+        </div>
+      </div>
+    </div>
+    <main>
+      <p id="error" class="msg" hidden></p>
+      <div class="period">
+        <h2 id="label"></h2>
+        <p id="sum" class="muted"></p>
+      </div>
+      <div id="view"></div>
+    </main>
+    <footer id="source" class="muted"></footer>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

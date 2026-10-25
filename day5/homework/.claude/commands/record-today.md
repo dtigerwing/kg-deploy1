@@ -1,8 +1,8 @@
 ---
-description: 오늘 개발 일지 기록 (커밋 + 빌드 용량 + 콘솔 경고 + 씬 성능 → Claude 분석 → Firestore)
+description: 오늘 프로젝트 현황 기록 (버전 + 커밋 상태 + 빌드 용량 + 콘솔 경고 + 씬 성능 → Claude 분석 → Firestore)
 ---
 
-Unity MCP로 오늘의 빌드 용량, 콘솔 경고, 씬 성능을 모으고, 기록 스크립트로 Claude 분석을 붙여 Firestore에 저장한다.
+Unity MCP로 오늘의 버전·플레이어 설정, 빌드 용량, 콘솔 경고, 씬 성능을 모으고, 기록 스크립트로 커밋 상태와 Claude 분석을 붙여 Firestore에 저장한다.
 설정은 `journal.config.json`(unityProject, scenes, sampleSeconds)을 읽는다. 중간 파일은 `journal-tmp/`에 쓴다.
 $ARGUMENTS 에 날짜(YYYY-MM-DD)가 있으면 그 날짜로 기록한다. 없으면 오늘이다.
 
@@ -19,6 +19,7 @@ Unity에서 실행할 C# 코드는 `unity-snippets/`에 있다. 파일을 읽어
 - 그다음 `execute_code`로 프로젝트 경로(`Application.dataPath`의 상위 폴더), 현재 씬 경로, `isDirty`, `EditorApplication.isPlaying`, Build Settings에서 켜진 씬 목록을 읽는다. 프로젝트 경로가 `unityProject`와 다르면 즉시 멈추고 사용자에게 알린다.
 - 이전 실행의 `journal-tmp/*.json`은 `journal-tmp/old/`로 옮긴다. 오늘 만들지 않은 파일이 섞이지 않게 하기 위해서다.
 - Play 모드라면 먼저 멈춘다. 저장하지 않은 씬이 있으면 사용자에게 저장할지 묻는다.
+- `unity-snippets/project-info.cs` 를 실행한다. `journal-tmp/project-info.json`(버전, AOS versionCode·패키지, iOS 빌드 번호·번들 ID, 스크립팅 백엔드·스트리핑 등)이 생긴다.
 
 ## 2. 빌드 용량 (오늘 빌드한 경우만)
 `unity-snippets/build-report.cs` 를 실행한다. `journal-tmp/build.json`(에셋별 용량)과 `journal-tmp/imports.json`(용량 큰 에셋 40개의 임포트 설정)이 생긴다.
@@ -46,11 +47,11 @@ Unity에서 실행할 C# 코드는 `unity-snippets/`에 있다. 파일을 읽어
 
 ## 5. 저장
 ```bash
-npm run record --silent -- [--date 날짜] [--build journal-tmp/build.json --imports journal-tmp/imports.json] [--warnings journal-tmp/warnings.json] [--perf journal-tmp/perf.json]
+npm run record --silent -- [--date 날짜] [--info journal-tmp/project-info.json] [--build journal-tmp/build.json --imports journal-tmp/imports.json] [--warnings journal-tmp/warnings.json] [--perf journal-tmp/perf.json]
 ```
-- 만들어진 파일만 옵션으로 넘긴다. 커밋은 스크립트가 unityProject 의 git 에서 직접 읽는다.
-- 스크립트는 빌드 분석·경고 분석 에이전트를 동시에 돌리고, 그 결과를 반영해 오늘 요약을 쓴다. 30초 안팎 걸린다.
+- 만들어진 파일만 옵션으로 넘긴다. 오늘 커밋과 커밋 상태(커밋 안 한 파일, 푸시 안 한 커밋)는 스크립트가 unityProject 의 git 에서 직접 읽는다.
+- 스크립트는 빌드 분석·설정 분석·경고 분석 에이전트를 동시에 돌리고, 그 결과를 반영해 현황 요약을 쓴다. 20~30초 걸린다.
 - Firebase를 아직 설정하지 않았으면 `--dry-run` 을 붙여 결과만 확인한다.
 
 ## 6. 보고
-스크립트가 출력한 오늘 요약, 분석에서 나온 가장 중요한 제안 한두 개, 건너뛴 항목(빌드 없음, 측정 실패한 씬)을 짧게 알려 준다.
+스크립트가 출력한 현황 요약, 분석에서 나온 가장 중요한 제안 한두 개, 건너뛴 항목(빌드 없음, 측정 실패한 씬)을 짧게 알려 준다.

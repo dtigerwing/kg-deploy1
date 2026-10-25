@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>모바일 게임 순위</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>모바일 게임 순위</h1>
+          <p class="sub"><span id="country-name">한국</span> · 무료 다운로드 · 스토어별 상위 50 <span id="updated"></span></p>
+        </div>
+        <div class="actions">
+          <select id="country" aria-label="국가">
+            <option value="kr">한국</option>
+          </select>
+          <button id="refresh" type="button">새로고침</button>
+        </div>
+      </header>
+
+      <nav class="tabs" id="tabs" aria-label="플랫폼">
+        <button type="button" data-platform="both" class="on">둘 다</button>
+        <button type="button" data-platform="aos">AOS</button>
+        <button type="button" data-platform="ios">iOS</button>
+      </nav>
+
+      <nav class="genres" id="genres" aria-label="장르"></nav>
+
+      <div id="notices"></div>
+      <p class="hint" id="hint"></p>
+      <ol class="list" id="list"></ol>
+
+      <footer>순위는 App Store와 Google Play 데이터 그대로이고, 장르와 한 줄 소개는 <span id="model">Claude</span>가 붙였어요.</footer>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

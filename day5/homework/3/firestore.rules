@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// kdh-agentic 프로젝트의 Firestore 규칙은 하나뿐이라 1번(프로젝트 현황)과 3번(Unity 현황 기록)을 함께 적는다.
+// 1/firestore.rules와 3/firestore.rules는 같은 내용이어야 한다. 어느 쪽에서 배포해도 서로의 규칙이 지워지지 않게.
+// 쓰기는 각 서버의 서비스 계정만 하고, 서비스 계정은 이 규칙을 거치지 않는다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1번: 누구나 읽기
+    match /{collection}/{id} {
+      allow read: if collection in ['days', 'weeks'];
+      allow write: if false;
+    }
+
+    // 3번: 구글 로그인한 본인만 읽기
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'kimdohan2@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    match /unitySnapshots/{id} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+    match /unityReports/{id} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+  }
+}

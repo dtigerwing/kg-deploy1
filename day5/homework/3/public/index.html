@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unity 현황</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1 id="projectName">Unity 현황</h1>
+        <p id="projectMeta" class="muted"></p>
+      </div>
+      <div class="top-actions">
+        <span id="connBadge" class="pill none">아직 읽지 않음</span>
+        <button id="refreshBtn" type="button">새로 읽기</button>
+      </div>
+    </header>
+    <p class="muted small"><span id="readAt"></span> <span id="saveState"></span></p>
+    <p id="notice" class="notice" hidden></p>
+
+    <section id="dashboard" class="stack" hidden>
+      <div id="metrics" class="metrics"></div>
+      <div id="platforms" class="grid2"></div>
+      <div class="grid2">
+        <div class="card"><p class="label">씬별 오브젝트와 Missing Script (씬 파일 기준)</p><div id="scenes"></div></div>
+        <div class="card"><p class="label">에셋 구성 (Assets 원본 파일 용량)</p><div id="assets"></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><p class="label" id="commitsLabel">최근 커밋</p><div id="commits"></div></div>
+        <div class="card"><p class="label" id="changesLabel">커밋 안 한 변경</p><div id="changes"></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><p class="label">콘솔 에러·경고</p><div id="console"></div></div>
+        <div class="card"><p class="label">패키지</p><div id="packages"></div></div>
+      </div>
+    </section>
+
+    <section id="emptyState" class="card empty-state">
+      <p>Unity에서 현황을 아직 읽지 않았어요.</p>
+      <p class="muted">"새로 읽기"를 누르면 Unity MCP와 git MCP로 지금 상태를 읽어 와요. 사이트는 프로젝트를 읽기만 하고 바꾸지 않아요.</p>
+    </section>
+
+    <section class="card">
+      <p class="label" id="agentLabel">에이전트</p>
+      <div class="agent-buttons">
+        <button class="secondary" type="button" data-agent="release">출시 전 점검</button>
+        <button class="secondary" type="button" data-agent="diet">용량 다이어트</button>
+        <button class="secondary" type="button" data-agent="changes">변경 분석</button>
+        <button class="secondary" type="button" data-agent="workflow">업무 쪼개기</button>
+      </div>
+      <p class="muted small">에이전트도 Unity와 git을 읽기만 해요. 바꿀 점은 제안으로만 알려 주고, 적용·커밋은 직접 해요.</p>
+      <div id="agentPanel" class="agent-panel" hidden></div>
+    </section>
+
+    <section id="workflow" class="stack" hidden>
+      <div class="card">
+        <label class="label" for="task">지금 하는 업무를 간단히 적어 주세요 (Unity 현황을 함께 참고해요)</label>
+        <textarea id="task" rows="3" placeholder="StageSelect 화면에 스테이지 해금 표시를 추가하는 작업을 준비하고 있어요"></textarea>
+        <div class="actions">
+          <button id="resetBtn" class="secondary" type="button" hidden>처음부터</button>
+          <button id="planBtn" type="button">업무 쪼개기</button>
+        </div>
+      </div>
+      <ol id="stepper" class="stepper">
+        <li data-step="input">업무 입력</li>
+        <li data-step="planning">쪼개기·계획</li>
+        <li data-step="approval">승인</li>
+        <li data-step="executing">실행</li>
+        <li data-step="review">평가·프리뷰</li>
+      </ol>
+      <div id="planSection" class="stack" hidden>
+        <div class="card">
+          <p class="label">목표 (쪼개기 에이전트)</p>
+          <p id="goal" class="goal"></p>
+        </div>
+        <div id="tasks" class="stack"></div>
+        <div id="approveBar" class="card approve-bar" hidden>
+          <p id="approveText" class="muted"></p>
+          <button id="approveBtn" type="button">승인하고 실행</button>
+        </div>
+      </div>
+      <div id="reviewSection" class="stack" hidden>
+        <div class="card">
+          <p class="label">평가 (취합·평가 에이전트)</p>
+          <div id="reviewBody"></div>
+        </div>
+        <div id="previewCard" class="card" hidden>
+          <div class="preview-head">
+            <p class="label">프리뷰</p>
+            <button id="downloadBtn" class="secondary small" type="button">HTML 저장</button>
+          </div>
+          <iframe id="preview" class="preview" sandbox="" title="취합된 결과물 프리뷰"></iframe>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
