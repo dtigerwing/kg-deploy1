@@ -1,0 +1,23 @@
+{
+  "cooldownSec": [8, 15],
+  "perMinuteCap": { "playing": 6, "intermission": 8 },
+  "maxSimultaneous": 2,
+  "batchWindowMs": 1000,
+  "chainChance": [0.4, 0.2],
+  "chainDelaySec": [1, 3],
+  "speakingTimeoutSec": 10,
+  "idleSec": 30,
+  "summaryDelaySec": 3,
+  "events": {
+    "pushed_out": { "priority": 4, "victim": 1.0, "pusher": 0.6, "bystander": 0.3 },
+    "self_out": { "priority": 4, "self": 1.0, "mocker": 0.5, "preferMocker": "lovey" },
+    "player_pushed_bot": { "priority": 4, "victim": 1.0 },
+    "player_out": { "priority": 4, "pusher": 0.7, "other": 0.3 },
+    "player_self_out": { "priority": 4, "other": 0.4 },
+    "hard_hit": { "priority": 1, "victim": 0.25 },
+    "close_call": { "priority": 2, "self": 0.3 },
+    "duel": { "priority": 3, "one": 0.5 },
+    "bot_win": { "priority": 5, "winner": 1.0, "others": 0.5 },
+    "player_win": { "priority": 5, "each": 0.6 }
+  }
+}

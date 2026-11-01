@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>투닥 아레나</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <header class="hud">
+    <div class="brand"><span class="logo">투닥 아레나</span><span id="round" class="round"></span></div>
+    <div id="score" class="score"></div>
+    <div class="right">
+      <span id="discord" class="pill">디스코드 미연결</span>
+      <button id="chatter" class="pill btn" type="button">봇 수다 켜짐</button>
+    </div>
+  </header>
+
+  <div id="center" class="center"></div>
+
+  <footer class="help">
+    <span>방향키 / WASD 이동 · 스페이스 돌진</span>
+    <div class="cd" title="돌진 준비"><div id="cdbar"></div></div>
+  </footer>
+
+  <div id="start" class="overlay">
+    <div class="card">
+      <h1>투닥 아레나</h1>
+      <p class="sub">코코, 러비, Rou와 밀치기 한 판!<br>경기장은 점점 좁아지고, 마지막까지 남으면 우승이에요.</p>
+      <div class="faces">
+        <img src="img/coco.png" alt="코코"><img src="img/lovey.png" alt="러비"><img src="img/rou.png" alt="Rou">
+      </div>
+      <label class="name">내 이름 <input id="name" maxlength="12" placeholder="플레이어" autocomplete="off"></label>
+      <button id="go" type="button">시작하기</button>
+      <p class="tip">봇들의 목소리는 디스코드 음성방 <b>투닥-아레나</b>에서 들려요.</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

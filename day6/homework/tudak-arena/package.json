@@ -1,0 +1,18 @@
+{
+  "name": "tudak-arena",
+  "version": "1.0.0",
+  "description": "투닥 아레나 — 코코·러비·Rou와 밀치기 게임하며 디스코드 음성방에서 수다 떠는 봇 친구들",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "setup-hermes": "node scripts/setup-hermes.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.28.0",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "socket.io": "^4.8.4",
+    "yaml": "^2.9.1"
+  }
+}

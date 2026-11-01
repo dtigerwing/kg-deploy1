@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tudak-arena",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "tudak-arena"],
+      "port": 3300
+    }
+  ]
+}
