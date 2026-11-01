@@ -10,8 +10,6 @@ import dotenv from 'dotenv';
 import YAML from 'yaml';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const env = dotenv.parse(readFileSync(`${root}.env`, 'utf8'));
-const characters = JSON.parse(readFileSync(`${root}config/characters.json`, 'utf8'));
 const HERMES_HOME = process.env.HERMES_HOME || `${homedir()}/.hermes`;
 
 const idFromToken = t => Buffer.from(t.split('.')[0], 'base64').toString('utf8');
@@ -22,6 +20,10 @@ function fail(msg) {
 }
 
 // ---------- 확인 ----------
+
+if (!existsSync(`${root}.env`)) fail('.env 파일이 없어요. `cp .env.example .env`로 만든 뒤 값을 채워 주세요.');
+const env = dotenv.parse(readFileSync(`${root}.env`, 'utf8'));
+const characters = JSON.parse(readFileSync(`${root}config/characters.json`, 'utf8'));
 
 const required = ['ANTHROPIC_API_KEY', 'DISCORD_TOKEN_REFEREE', 'DISCORD_OWNER_ID', 'DISCORD_TEXT_CHANNEL_ID',
   ...characters.bots.map(b => b.tokenEnv)];

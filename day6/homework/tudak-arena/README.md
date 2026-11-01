@@ -37,7 +37,7 @@
 ## 처음 한 번만 하는 준비
 
 ### 1. `.env` 채우기
-`.env` 파일을 열어 `=` 뒤에 메모해 둔 값을 붙여넣어요. (git에는 올라가지 않아요)
+`.env`가 없으면(새 노트북) 먼저 `cp .env.example .env`로 만들어요. `.env` 파일을 열어 `=` 뒤에 메모해 둔 값을 붙여넣어요. (git에는 올라가지 않아서 노트북마다 따로 채워야 해요)
 
 - `ANTHROPIC_API_KEY`
 - `DISCORD_TOKEN_COCO`, `DISCORD_TOKEN_LOVEY`, `DISCORD_TOKEN_ROU`, `DISCORD_TOKEN_REFEREE`
@@ -60,7 +60,7 @@ source ~/.zshrc
 cd ~/.hermes/hermes-agent && python -c "import pm; pm.sync_venv(['voice', 'messaging', 'edge-tts'], explicit=True)"
 ```
 
-음성 처리 프로그램(ffmpeg, opus, portaudio)은 이미 brew로 설치해 뒀어요.
+음성 처리 프로그램도 필요해요. 처음 쓰는 노트북이면 `brew install ffmpeg opus portaudio`를 실행하세요.
 
 ### 3. 봇 3명 설정 (한 번에)
 
